@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T00:20:23.400-03:00",
+  "title": "Design System: Tabuada Rock",
+  "extensions": {
+    "colorMeta": {
+      "cobalto": {
+        "role": "primary",
+        "displayName": "Cobalto Elétrico",
+        "canonical": "#2440ff",
+        "tonalRamp": ["oklch(18% 0.12 265)", "oklch(28% 0.18 265)", "oklch(40% 0.25 265)", "#2440ff", "oklch(62% 0.23 265)", "oklch(74% 0.17 265)", "oklch(86% 0.09 265)", "oklch(95% 0.03 265)"]
+      },
+      "brasa": {
+        "role": "secondary",
+        "displayName": "Brasa de Rival",
+        "canonical": "#ff4a1c",
+        "tonalRamp": ["oklch(18% 0.09 35)", "oklch(30% 0.14 35)", "oklch(43% 0.20 35)", "#ff4a1c", "oklch(65% 0.21 35)", "oklch(77% 0.14 35)", "oklch(88% 0.07 35)", "oklch(95% 0.025 35)"]
+      },
+      "ouro": {
+        "role": "secondary",
+        "displayName": "Ouro de Fliperama",
+        "canonical": "#ffd21f",
+        "tonalRamp": ["oklch(22% 0.08 90)", "oklch(34% 0.11 90)", "oklch(48% 0.14 90)", "oklch(62% 0.16 90)", "#ffd21f", "oklch(82% 0.12 90)", "oklch(90% 0.07 90)", "oklch(96% 0.025 90)"]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta de Nanquim",
+        "canonical": "#1a1230",
+        "tonalRamp": ["oklch(12% 0.04 295)", "#1a1230", "oklch(28% 0.06 295)", "oklch(40% 0.06 295)", "oklch(55% 0.05 295)", "oklch(70% 0.035 295)", "oklch(84% 0.02 295)", "oklch(95% 0.008 295)"]
+      },
+      "giz": {
+        "role": "neutral",
+        "displayName": "Giz de Papel",
+        "canonical": "#f4f7ff",
+        "tonalRamp": ["oklch(18% 0.02 265)", "oklch(32% 0.025 265)", "oklch(46% 0.025 265)", "oklch(60% 0.02 265)", "oklch(74% 0.02 265)", "oklch(86% 0.015 265)", "#f4f7ff", "oklch(98% 0.006 265)"]
+      },
+      "menta": {
+        "role": "tertiary",
+        "displayName": "Menta de Acerto",
+        "canonical": "#19d3a0",
+        "tonalRamp": ["oklch(18% 0.07 165)", "oklch(30% 0.10 165)", "oklch(44% 0.14 165)", "#19d3a0", "oklch(68% 0.14 165)", "oklch(80% 0.09 165)", "oklch(90% 0.05 165)", "oklch(96% 0.02 165)"]
+      },
+      "nevoa": {
+        "role": "neutral",
+        "displayName": "Névoa de Espera",
+        "canonical": "#d9e0f7",
+        "tonalRamp": ["oklch(20% 0.02 265)", "oklch(34% 0.025 265)", "oklch(48% 0.03 265)", "oklch(62% 0.03 265)", "oklch(76% 0.025 265)", "#d9e0f7", "oklch(91% 0.018 265)", "oklch(97% 0.006 265)"]
+      },
+      "tipo-raio": { "role": "tertiary", "displayName": "Tipo Raio", "canonical": "#ffe014", "tonalRamp": ["oklch(22% 0.08 100)", "oklch(36% 0.11 100)", "oklch(50% 0.14 100)", "oklch(64% 0.16 100)", "#ffe014", "oklch(84% 0.11 100)", "oklch(92% 0.06 100)", "oklch(97% 0.02 100)"] },
+      "tipo-agua": { "role": "tertiary", "displayName": "Tipo Água", "canonical": "#1fa2ff", "tonalRamp": ["oklch(18% 0.08 245)", "oklch(30% 0.11 245)", "oklch(44% 0.15 245)", "#1fa2ff", "oklch(68% 0.14 245)", "oklch(80% 0.09 245)", "oklch(90% 0.05 245)", "oklch(96% 0.02 245)"] },
+      "tipo-fogo": { "role": "tertiary", "displayName": "Tipo Fogo", "canonical": "#ff5a1f", "tonalRamp": ["oklch(18% 0.09 40)", "oklch(30% 0.13 40)", "oklch(44% 0.18 40)", "#ff5a1f", "oklch(68% 0.18 40)", "oklch(80% 0.12 40)", "oklch(90% 0.06 40)", "oklch(96% 0.02 40)"] },
+      "tipo-planta": { "role": "tertiary", "displayName": "Tipo Planta", "canonical": "#2dbe4e", "tonalRamp": ["oklch(18% 0.07 145)", "oklch(30% 0.10 145)", "oklch(44% 0.14 145)", "#2dbe4e", "oklch(66% 0.13 145)", "oklch(78% 0.09 145)", "oklch(89% 0.05 145)", "oklch(96% 0.02 145)"] },
+      "tipo-pedra": { "role": "tertiary", "displayName": "Tipo Pedra", "canonical": "#b08a5f", "tonalRamp": ["oklch(18% 0.035 65)", "oklch(32% 0.05 65)", "oklch(46% 0.06 65)", "#b08a5f", "oklch(66% 0.06 65)", "oklch(78% 0.04 65)", "oklch(89% 0.025 65)", "oklch(96% 0.01 65)"] },
+      "tipo-vento": { "role": "tertiary", "displayName": "Tipo Vento", "canonical": "#7fd6ea", "tonalRamp": ["oklch(18% 0.05 210)", "oklch(32% 0.07 210)", "oklch(46% 0.09 210)", "oklch(60% 0.09 210)", "#7fd6ea", "oklch(80% 0.06 210)", "oklch(90% 0.035 210)", "oklch(96% 0.014 210)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Announcer", "purpose": "Hero fight calls, K.O., Vitória, Round, and other arcade announcements." },
+      "headline": { "displayName": "Arcade Headline", "purpose": "Lockups, menu titles, result titles, and champion titles." },
+      "title": { "displayName": "Fight Title", "purpose": "Screen and panel titles, info headings, combo and clock-sized readouts." },
+      "body": { "displayName": "Readable Body", "purpose": "Instructions, help, records, panel copy, and explanatory text." },
+      "label": { "displayName": "Machine Label", "purpose": "Buttons, chips, HUD labels, table headers, tabs, and keyboard hints." }
+    },
+    "shadows": [
+      { "name": "lift", "value": "6px 6px 0 var(--tinta), 10px 14px 22px rgb(26 18 48 / 0.28)", "purpose": "Large plates, big buttons, cards, question plates, and selected large surfaces." },
+      { "name": "lift-sm", "value": "4px 4px 0 var(--tinta), 6px 9px 14px rgb(26 18 48 / 0.24)", "purpose": "Standard controls, compact cards, HUD frames, and secondary surfaces." },
+      { "name": "pressed-ink", "value": "1px 1px 0 var(--tinta)", "purpose": "Pressed buttons, cards, and keypad keys." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Default expressive entrance, hover, press, and pop easing." },
+      { "name": "state-fast", "value": "120ms", "purpose": "Button, card, plate, and color state transitions." },
+      { "name": "screen-in", "value": "200ms", "purpose": "Screen entry from the left." },
+      { "name": "slam", "value": "460ms", "purpose": "Title lockup slam-in on attract mode." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "859.98px" },
+      { "name": "wide", "value": "860px" },
+      { "name": "short-laptop", "value": "min-width: 860px and max-height: 760px" },
+      { "name": "coarse-pointer", "value": "pointer: coarse" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main arcade action button for play, continue, and confirmation.",
+      "html": "<button class=\"ds-btn-primary\">Jogar agora</button>",
+      "css": ".ds-btn-primary{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;min-height:3rem;padding:.5rem 1.5rem;border:0;background:transparent;color:var(--giz,#f4f7ff);font-family:var(--font,'Anybody Variable','Arial Black','Segoe UI',system-ui,sans-serif);font-weight:850;font-style:italic;text-transform:uppercase;transition:transform 120ms cubic-bezier(.16,1,.3,1);cursor:pointer}.ds-btn-primary::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--cobalto,#2440ff);border:3px solid var(--tinta,#1a1230);transform:skewX(-10deg);box-shadow:4px 4px 0 var(--tinta,#1a1230),6px 9px 14px rgb(26 18 48 / .24)}.ds-btn-primary:hover{transform:translate(-2px,-2px)}.ds-btn-primary:active{transform:translate(3px,3px)}.ds-btn-primary:active::before{box-shadow:1px 1px 0 var(--tinta,#1a1230)}.ds-btn-primary:focus-visible{outline:0;color:var(--tinta,#1a1230)}.ds-btn-primary:focus-visible::before{background:var(--ouro,#ffd21f);outline:3px solid var(--tinta,#1a1230);outline-offset:4px}"
+    },
+    {
+      "name": "Type Chip",
+      "kind": "chip",
+      "refersTo": "chip-type",
+      "description": "Compact element/type badge used on creatures and matchup labels.",
+      "html": "<span class=\"ds-chip-type\">Raio</span>",
+      "css": ".ds-chip-type{position:relative;isolation:isolate;display:inline-flex;align-items:center;padding:.12em .7em;color:var(--tinta,#1a1230);font-family:var(--font,'Anybody Variable','Arial Black','Segoe UI',system-ui,sans-serif);font-size:clamp(.85rem,.8rem + .2vw,.95rem);font-weight:800;font-style:italic;letter-spacing:.02em;text-transform:uppercase}.ds-chip-type::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--t-raio,#ffe014);border:2px solid var(--tinta,#1a1230);transform:skewX(-10deg)}"
+    },
+    {
+      "name": "Paper Plate",
+      "kind": "card",
+      "refersTo": "plate-paper",
+      "description": "Default readable surface over the 3D scene.",
+      "html": "<section class=\"ds-plate-paper\"><h3>Round vencido!</h3><p>Agora vem o round final.</p></section>",
+      "css": ".ds-plate-paper{position:relative;isolation:isolate;display:grid;gap:1rem;width:min(100%,28rem);padding:1rem 1.5rem;color:var(--tinta,#1a1230);font-family:var(--font,'Anybody Variable','Arial Black','Segoe UI',system-ui,sans-serif);font-weight:560;line-height:1.4}.ds-plate-paper::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--giz,#f4f7ff);border:3px solid var(--tinta,#1a1230);transform:skewX(-10deg);box-shadow:6px 6px 0 var(--tinta,#1a1230),10px 14px 22px rgb(26 18 48 / .28)}.ds-plate-paper h3{margin:0;color:var(--cobalto,#2440ff);font-size:clamp(2rem,1.4rem + 2.4vw,3.4rem);font-weight:900;font-style:italic;font-stretch:120%;line-height:1;text-transform:uppercase}.ds-plate-paper p{margin:0;font-weight:700}"
+    },
+    {
+      "name": "Answer Box",
+      "kind": "input",
+      "refersTo": "input-answer",
+      "description": "Central numeric slot inside the multiplication question plate.",
+      "html": "<label class=\"ds-answer-box\"><span class=\"ds-answer-eq\">6 × 7 = </span><input aria-label=\"Resposta\" inputmode=\"numeric\" maxlength=\"3\" /></label>",
+      "css": ".ds-answer-box{display:inline-flex;align-items:center;gap:.28em;color:var(--tinta,#1a1230);font-family:var(--font,'Anybody Variable','Arial Black','Segoe UI',system-ui,sans-serif);font-size:clamp(2.6rem,1.6rem + 3.4vw,4.6rem);font-weight:900;font-style:italic;font-stretch:112%;line-height:1;font-variant-numeric:tabular-nums}.ds-answer-box input{width:2.4em;height:1.3em;padding:0 .12em;border:3px solid var(--tinta,#1a1230);background:#fff;transform:skewX(-10deg);box-shadow:inset 3px 3px 0 rgb(26 18 48 / .14);color:var(--tinta,#1a1230);font:inherit;text-align:center;caret-color:var(--cobalto,#2440ff);outline:0}.ds-answer-box input:focus{background:var(--ouro,#ffd21f);outline:3px solid var(--tinta,#1a1230);outline-offset:4px}"
+    },
+    {
+      "name": "HUD Life Bar",
+      "kind": "custom",
+      "refersTo": "plate-paper",
+      "description": "Segmented fighting-game meter that drains from the center outward.",
+      "html": "<div class=\"ds-bar\" role=\"meter\" aria-label=\"Vida\"><i class=\"is-on\"></i><i class=\"is-on\"></i><i></i><i></i><i></i></div>",
+      "css": ".ds-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;width:18rem;height:1.4rem;padding:3px;background:var(--tinta,#1a1230);transform:skewX(-10deg);box-shadow:4px 4px 0 rgb(26 18 48 / .4),6px 9px 14px rgb(26 18 48 / .24)}.ds-bar i{display:block;background:rgb(244 247 255 / .16)}.ds-bar i.is-on{background:var(--menta,#19d3a0)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Fliperama de Luta Brasileiro",
+    "overview": "Tabuada Rock is a full-bleed 3D arcade fight wrapped in a DOM control layer. The visual system turns arithmetic into spectacle: products become damage numbers, correct answers become hits, and every teaching or record screen borrows the same fighting-game grammar of skewed plates, ink outlines, heavy announcer type, segmented meters, and tactile button states.\n\nThe shipped world is deliberately loud but legible. Cobalt player energy, brasa rival pressure, arcade gold reward, and ink structure repeat through both the HUD and the 3D scene. The DOM never floats bare over the stage when it carries important text; it sits on paper or ink plates so the learning loop stays readable over daylight Brazilian arenas.",
+    "keyCharacteristics": [
+      "Full-bleed Three.js stage behind a DOM HUD and screen overlay.",
+      "Toon-shaded original creatures and scenery with hard ink outlines.",
+      "Skewed, square-corner plates with thick ink borders and hard offset shadows.",
+      "Black italic expanded type for title, button, HUD, and announcer moments.",
+      "Keyboard-first answer entry with a matching on-screen keypad for pointer and touch."
+    ],
+    "rules": [
+      { "name": "Plate Before Words", "body": "Important text over the 3D scene must sit on an ink or paper plate; only decorative or hidden text may float without backing.", "section": "colors" },
+      { "name": "Four-Color Fight", "body": "Cobalto means player/action, brasa means rival/danger, ouro means reward/focus, and tinta means structure; do not swap these roles for novelty.", "section": "colors" },
+      { "name": "Announcer Voice", "body": "Anything that declares a fight state uses heavyweight italic uppercase with ink stroke or ink plate support; quiet sentence case is reserved for explanatory body copy.", "section": "typography" },
+      { "name": "Tabular Numbers", "body": "Scores, clocks, equations, damage, mastery grids, and standings use tabular numerals so changing values do not jitter during play.", "section": "typography" },
+      { "name": "Hard Contact", "body": "Shadows must include an ink-colored offset contact shadow; purely soft elevation does not match the fliperama cabinet language.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put important copy on a plate before placing it over the 3D stage.",
+      "Do keep skewed plates, italic heavy type, ink strokes, and hard offset shadows; they are native to this world, not decoration to remove.",
+      "Do use ouro for focus, reward, selected states, stars, and current prompts.",
+      "Do keep controls square-cornered and tactile, with hover/press movement and visible focus outlines.",
+      "Do preserve keyboard-first clarity: typed answers, tabular numerals, hidden decorative animation from assistive tech, and coarse-pointer keypad support."
+    ],
+    "donts": [
+      "Don't introduce Pokémon characters, logos, sprites, Poké Ball trade dress, or copied fan-game UI; the shipped creatures and stages are original.",
+      "Don't place learning-critical text directly on the scene without an ink or paper backing.",
+      "Don't replace hard ink shadows with soft card elevation or glassmorphism.",
+      "Don't round the main plates, buttons, tabs, cards, fields, or answer boxes; square skew is the system shape.",
+      "Don't invent new accent roles when cobalto, brasa, ouro, menta, nevoa, and the type colors already cover the state language."
+    ]
+  }
+}

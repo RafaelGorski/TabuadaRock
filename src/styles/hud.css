@@ -1,0 +1,628 @@
+/* ---- Fight HUD: every readout sits on a solid plate, never on the bare scene ---- */
+
+.hud {
+  position: absolute;
+  top: var(--pad-y);
+  left: var(--pad-x);
+  right: var(--pad-x);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-5);
+  pointer-events: none;
+}
+
+.hud__side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  align-content: start;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.hud__side--p2 {
+  justify-items: end;
+}
+
+.hud .fighter {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  max-width: 34rem;
+}
+
+.hud__side--p2 .fighter,
+.hud__side--p2 .fighter__name {
+  flex-direction: row-reverse;
+}
+
+.fighter__face {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  display: grid;
+  place-items: end center;
+  width: 4.6rem;
+  aspect-ratio: 1;
+}
+
+.fighter__face::before,
+.fighter__name > span:first-child::before,
+.super::before,
+.combo span::before,
+.hud__round::before,
+.hud__score::before,
+.clock::before,
+.announcer__sub::before,
+.pin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--tag, var(--tinta));
+  transform: skewX(var(--skew));
+}
+
+.fighter__face::before {
+  --tag: var(--cobalto);
+  border: var(--edge) solid var(--tinta);
+  box-shadow: var(--lift-sm);
+}
+
+.hud__side--p2 .fighter__face::before {
+  --tag: var(--brasa-escuro);
+}
+
+/* The portrait's head breaks out of its frame, like a character select. */
+.fighter__img {
+  width: 122%;
+  max-width: none;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+
+.fighter__info {
+  display: grid;
+  gap: var(--s-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.fighter__name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.fighter__name > span:first-child,
+.super,
+.combo span,
+.hud__round,
+.hud__score,
+.clock,
+.announcer__sub,
+.pin {
+  position: relative;
+  isolation: isolate;
+}
+
+.fighter__name > span:first-child {
+  padding: 0.12em 0.75em;
+  font-size: var(--step-0);
+  font-weight: 900;
+  font-style: italic;
+  font-stretch: 120%;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--giz);
+}
+
+/* ---- Life bars: segments drain from the middle of the screen outward ---- */
+
+.bar {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr));
+  gap: 3px;
+  width: 100%;
+  height: 1.4rem;
+  padding: 3px;
+  background: var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow:
+    4px 4px 0 rgb(26 18 48 / 0.4),
+    6px 9px 14px rgb(26 18 48 / 0.24);
+}
+
+.bar--p2 {
+  direction: rtl;
+}
+
+.bar__seg {
+  display: block;
+  background: rgb(244 247 255 / 0.16);
+}
+
+.bar__seg.is-on {
+  background: var(--ouro);
+}
+
+.bar--p1 .bar__seg.is-on {
+  background: var(--menta);
+}
+
+.bar__seg.is-lost {
+  animation: seg-lost 560ms var(--ease-out) both;
+}
+
+@keyframes seg-lost {
+  0% {
+    background: var(--giz);
+  }
+  30% {
+    background: var(--brasa);
+  }
+  100% {
+    background: rgb(244 247 255 / 0.16);
+  }
+}
+
+/* ---- Super meter and combo, under the player's bar ---- */
+
+.super,
+.combo {
+  margin-left: calc(4.6rem + var(--s-4));
+}
+
+.super {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0.3rem 0.8rem;
+  color: var(--giz);
+}
+
+.super__label {
+  font-size: var(--step--1);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.super__pips {
+  display: flex;
+  gap: 4px;
+}
+
+.super__pip {
+  width: 1.15rem;
+  height: 0.8rem;
+  transform: skewX(var(--skew));
+  background: rgb(244 247 255 / 0.18);
+  transition: background-color 160ms;
+}
+
+.super__pip.is-on {
+  background: var(--t-agua);
+}
+
+.super.is-full .super__label {
+  color: var(--ouro);
+}
+
+.super.is-full .super__pip {
+  background: var(--ouro);
+}
+
+.combo {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  visibility: hidden;
+  transform-origin: left center;
+}
+
+.combo.is-on {
+  visibility: visible;
+  animation: combo-in 260ms var(--ease-out) both;
+}
+
+.combo b {
+  font-size: var(--step-3);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--ouro);
+  -webkit-text-stroke: 6px var(--tinta);
+  paint-order: stroke fill;
+  text-shadow: 3px 4px 0 var(--tinta);
+}
+
+.combo span {
+  padding: 0.12em 0.6em;
+  font-size: var(--step--1);
+  font-weight: 850;
+  font-style: italic;
+  text-transform: uppercase;
+  color: var(--giz);
+}
+
+@keyframes combo-in {
+  from {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* ---- Middle column: clock, round, score ---- */
+
+.hud__mid {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+}
+
+.clock {
+  display: grid;
+  place-items: center;
+  min-width: 5.4rem;
+  height: 4.4rem;
+  padding: 0 var(--s-4);
+  font-size: var(--step-3);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--giz);
+}
+
+.clock::before {
+  border: var(--edge) solid var(--tinta);
+  box-shadow: var(--lift-sm);
+}
+
+.clock svg {
+  width: 2.8rem;
+  height: 2.8rem;
+  stroke-width: 2.6;
+}
+
+.clock.is-timed {
+  color: var(--ouro);
+}
+
+.clock.is-urgent {
+  color: var(--giz);
+}
+
+.clock.is-urgent::before {
+  --tag: var(--brasa-escuro);
+}
+
+.hud__round {
+  padding: 0.15em 0.8em;
+  font-size: var(--step--1);
+  font-weight: 850;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  color: var(--giz);
+}
+
+.pips {
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.2rem 0;
+}
+
+.pip {
+  width: 0.85rem;
+  height: 0.85rem;
+  rotate: 45deg;
+  background: var(--tinta);
+  border: 2px solid var(--giz);
+  box-shadow: 2px 2px 0 var(--tinta);
+}
+
+.pip.is-now {
+  background: var(--giz);
+}
+
+.pip.is-won {
+  background: var(--ouro);
+  border-color: var(--tinta);
+}
+
+.hud__score {
+  display: grid;
+  justify-items: center;
+  min-width: 7rem;
+  padding: 0.25rem 0.9rem 0.3rem;
+  line-height: 1.1;
+  color: var(--giz);
+}
+
+.hud__label {
+  font-size: var(--step--1);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hud__points {
+  font-size: var(--step-1);
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  color: var(--ouro);
+}
+
+/* ---- Announcer: ROUND 1, LUTE!, K.O.! ---- */
+
+.announcer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--pad-x);
+  pointer-events: none;
+}
+
+.announcer__line {
+  --fill: var(--ouro);
+  display: grid;
+  justify-items: center;
+  gap: var(--s-4);
+  text-align: center;
+  animation: call-in 220ms var(--ease-out) both;
+}
+
+.announcer__line--giz {
+  --fill: var(--giz);
+}
+
+.announcer__line--brasa {
+  --fill: var(--brasa);
+}
+
+.announcer__line--menta {
+  --fill: var(--menta);
+}
+
+.announcer__line.is-out {
+  animation: call-out 180ms ease-in both;
+}
+
+.announcer__text {
+  font-size: min(var(--announcer), 13vw);
+  font-weight: 900;
+  font-style: italic;
+  font-stretch: 125%;
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--fill);
+  -webkit-text-stroke: 0.09em var(--tinta);
+  paint-order: stroke fill;
+  text-shadow:
+    0.035em 0.045em 0 var(--tinta),
+    0.07em 0.09em 0 var(--tinta);
+}
+
+.announcer__line--small .announcer__text {
+  font-size: min(calc(var(--announcer) * 0.5), 9vw);
+}
+
+.announcer__sub {
+  padding: 0.15em 0.9em;
+  font-size: var(--step-2);
+  font-weight: 850;
+  font-style: italic;
+  text-transform: uppercase;
+  color: var(--giz);
+}
+
+@keyframes call-in {
+  from {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes call-out {
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+/* ---- Damage numbers float off the creature that took the hit ---- */
+
+.pops,
+.pins {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pop {
+  position: absolute;
+  translate: -50% -100%;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  -webkit-text-stroke: 6px var(--tinta);
+  paint-order: stroke fill;
+  text-shadow: 3px 4px 0 var(--tinta);
+  animation: pop-up 1300ms var(--ease-out) both;
+}
+
+.pop--hit {
+  font-size: var(--step-4);
+  color: var(--ouro);
+}
+
+.pop--points {
+  font-size: var(--step-2);
+  color: var(--menta);
+}
+
+.pop--still {
+  animation: none !important;
+}
+
+@keyframes pop-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.7);
+  }
+  14% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-70px);
+  }
+}
+
+/* ---- Pins: running totals hung on the orb rows in training ---- */
+
+.pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: -50% -50%;
+  padding: 0.1em 0.55em;
+  font-size: var(--step-0);
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  color: var(--giz);
+  white-space: nowrap;
+}
+
+.pin--total {
+  --tag: var(--ouro);
+  color: var(--tinta);
+  font-size: var(--step-1);
+  animation: pin-in 240ms var(--ease-out) both;
+}
+
+.pin--total::before {
+  border: 2px solid var(--tinta);
+  box-shadow: 3px 3px 0 var(--tinta);
+}
+
+@keyframes pin-in {
+  from {
+    opacity: 0;
+    scale: 0.5;
+  }
+}
+
+/* ---- Narrow screens: clock and round ride a strip on top, the two fighters share the row under it ---- */
+
+@media (max-width: 859.98px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'mid mid'
+      'p1 p2';
+    gap: var(--s-2) var(--s-3);
+  }
+
+  .hud__side--p1 {
+    grid-area: p1;
+  }
+
+  .hud__side--p2 {
+    grid-area: p2;
+  }
+
+  .hud__mid {
+    grid-area: mid;
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+  }
+
+  .hud__round {
+    order: -2;
+  }
+
+  .pips {
+    order: -1;
+  }
+
+  .hud .fighter {
+    gap: var(--s-2);
+  }
+
+  .fighter__face {
+    display: none;
+  }
+
+  .fighter__name > span:first-child {
+    font-size: var(--step--1);
+  }
+
+  .fighter__name .chip {
+    display: none;
+  }
+
+  .bar {
+    height: 1.05rem;
+  }
+
+  .super,
+  .combo {
+    margin-left: 0;
+  }
+
+  .super__label {
+    display: none;
+  }
+
+  .combo b {
+    font-size: var(--step-2);
+  }
+
+  .clock {
+    min-width: 3.4rem;
+    height: 2.6rem;
+    padding: 0 var(--s-3);
+    font-size: var(--step-1);
+  }
+
+  .clock svg {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .hud__score {
+    min-width: 0;
+    padding-inline: 0.6rem;
+  }
+
+  .hud__label {
+    display: none;
+  }
+}

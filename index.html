@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+THESIS: Every times-table fact is a fighting move; the typed answer is the hit. Refuses the level-path quiz map and the Pokémon fan-game turn menu.
+OWN-WORLD: Toon-shaded original Brazilian creatures with ink outlines on daylight Brazilian stages; skewed ink HUD plates, segmented gold life bars, cobalt player against brasa rival; Anybody black italic, expanded, with hard-offset extrusion for announcer calls; a grid-floor training room where orb arrays build each table.
+STORY: See a fight, pick a fighter profile and partner, climb the tower of tables 2 to 10. Treino teaches with skip-count orbs; three rounds go in order, shuffled, then on a gentle clock; each win recruits the guardian; the champion fight mixes everything; records rank every profile.
+FIRST VIEWPORT: Attract mode: a full-bleed demo fight lands 6 × 7 = 42, the TABUADA ROCK lockup slams in, APERTE ENTER blinks; any key or click starts.
+FORM: Fliperama de Luta, candidate 3 of 7; staging: cold open (attract mode); seed 069b1990.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tabuada Rock: a luta da tabuada</title>
+    <meta name="description" content="Jogo de luta em 3D para aprender a tabuada do 2 ao 10 com criaturas brasileiras." />
+    <meta name="theme-color" content="#2440FF" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <canvas id="palco" aria-hidden="true"></canvas>
+    <main id="ui">
+      <div class="boot" role="status">
+        <p class="boot__title">Tabuada Rock</p>
+        <p class="boot__msg">Aquecendo os lutadores…</p>
+      </div>
+    </main>
+    <div id="anuncio" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <noscript>
+      <p class="noscript">O Tabuada Rock precisa de JavaScript ligado para funcionar.</p>
+    </noscript>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
