@@ -1,0 +1,709 @@
+/* ---- Question plate: the one place the eyes go during a fight ---- */
+
+.qplate {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    'eq dica'
+    'hint hint';
+  align-items: center;
+  justify-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: var(--s-4) var(--s-6);
+  color: var(--tinta);
+}
+
+.qplate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--giz);
+  border: var(--edge) solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: var(--lift);
+}
+
+.qplate__main,
+.qplate__side {
+  display: contents;
+}
+
+.qplate__eq {
+  grid-area: eq;
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  font-size: clamp(2.6rem, 1.6rem + 3.4vw, 4.6rem);
+  font-weight: 900;
+  font-style: italic;
+  font-stretch: 112%;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qplate__op {
+  color: var(--cobalto);
+}
+
+.qplate__box {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.4em;
+  height: 1.3em;
+}
+
+.qplate__box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  border: var(--edge) solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: inset 3px 3px 0 rgb(26 18 48 / 0.14);
+  transition: background-color 120ms;
+}
+
+.answer {
+  width: 2.4em;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0.12em;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+  caret-color: var(--cobalto);
+  outline: none;
+  user-select: text;
+}
+
+/* Ouro marks "your turn"; the state colors below override it. */
+.qplate__box:focus-within::before,
+.qplate__box--demo::before {
+  background: var(--ouro);
+}
+
+.qplate.is-locked .qplate__box::before {
+  background: var(--nevoa);
+}
+
+.qplate[data-state='ok'] .qplate__box::before {
+  background: var(--menta);
+}
+
+.qplate[data-state='erro'] .qplate__box::before {
+  background: var(--brasa);
+}
+
+.qplate[data-state='ok'] .qplate__box {
+  animation: box-pop 260ms var(--ease-out);
+}
+
+.qplate[data-state='erro'] {
+  animation: shake 380ms var(--ease-out);
+}
+
+.qplate[data-state='vazio'] .qplate__box {
+  animation: box-pop 300ms var(--ease-out);
+}
+
+@keyframes box-pop {
+  45% {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes shake {
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(9px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.qplate__hint {
+  grid-area: hint;
+  max-width: 36ch;
+  margin-top: var(--s-3);
+  font-size: var(--step-0);
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.qplate__hint[data-kind='pedido'] {
+  font-weight: 850;
+  color: var(--brasa-escuro);
+}
+
+.qplate__dica {
+  grid-area: dica;
+  margin-left: var(--s-5);
+}
+
+/* ---- On-screen keypad: on by choice, always on touch screens ---- */
+
+.keypad {
+  grid-area: keypad;
+  display: none;
+}
+
+html.has-keypad .qplate {
+  grid-template-columns: auto auto auto;
+  grid-template-areas:
+    'eq dica keypad'
+    'hint hint keypad';
+}
+
+html.has-keypad .keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 3.6rem);
+  grid-auto-rows: 3rem;
+  gap: 6px;
+  margin-left: var(--s-5);
+}
+
+.key {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  font-size: var(--step-1);
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+  touch-action: manipulation;
+}
+
+.key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  border: 2px solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: 3px 3px 0 var(--tinta);
+  transition: background-color 80ms;
+}
+
+.key svg {
+  width: 1.3em;
+  height: 1.3em;
+}
+
+.key--erase::before {
+  background: var(--nevoa);
+}
+
+.key--ok {
+  color: var(--giz);
+}
+
+.key--ok::before {
+  background: var(--cobalto);
+}
+
+@media (hover: hover) {
+  .key:hover {
+    color: var(--tinta);
+  }
+
+  .key:hover::before {
+    background: var(--ouro);
+  }
+}
+
+.key:active {
+  color: var(--tinta);
+  transform: translate(2px, 2px);
+}
+
+.key:active::before {
+  background: var(--ouro);
+  box-shadow: 1px 1px 0 var(--tinta);
+}
+
+.key:focus-visible {
+  outline: 3px solid var(--tinta);
+  outline-offset: 3px;
+}
+
+/* ---- Side panels: the trick after a miss, the round report, the coach ---- */
+
+.fightpanel,
+.coach,
+.pause__box {
+  --skew: -2.5deg;
+  display: grid;
+  align-content: start;
+  gap: var(--s-4);
+}
+
+.fp__title,
+.coach__title {
+  font-size: var(--step-3);
+  font-weight: 900;
+  font-style: italic;
+  font-stretch: 120%;
+  line-height: 1;
+  text-transform: uppercase;
+  text-wrap: balance;
+  font-variant-numeric: tabular-nums;
+  color: var(--cobalto);
+}
+
+.coach__title {
+  font-size: var(--step-2);
+}
+
+.fp__trick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--step-1);
+  font-weight: 850;
+  font-style: italic;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.fp__trick svg {
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0.3rem;
+  background: var(--ouro);
+  border: 2px solid var(--tinta);
+  box-shadow: 2px 2px 0 var(--tinta);
+}
+
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.chain__step {
+  position: relative;
+  padding: 0.15em 0.6em;
+  font-size: var(--step-1);
+  font-weight: 850;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  background: #fff;
+  border: 2px solid var(--tinta);
+  box-shadow: 2px 2px 0 var(--tinta);
+}
+
+.chain__step + .chain__step {
+  margin-left: 1.1em;
+}
+
+/* A drawn chevron: the font has no arrow glyph. */
+.chain__step + .chain__step::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -0.95em;
+  width: 0.42em;
+  height: 0.42em;
+  border: solid var(--tinta);
+  border-width: 3px 3px 0 0;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.chain__step.is-result {
+  background: var(--ouro);
+}
+
+.fp__swap,
+.fp__note {
+  color: rgb(26 18 48 / 0.78);
+}
+
+.fp__note {
+  font-size: var(--step--1);
+  font-weight: 650;
+}
+
+.fp__ask {
+  font-weight: 700;
+}
+
+.fp__ask b {
+  font-size: var(--step-1);
+  font-weight: 900;
+  font-style: italic;
+  color: var(--cobalto);
+}
+
+.fp__good {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  width: fit-content;
+  padding: 0.2em 0.8em;
+  font-weight: 850;
+  font-style: italic;
+}
+
+.fp__good::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--menta);
+  border: 2px solid var(--tinta);
+  transform: skewX(var(--skew));
+}
+
+.fp__good svg {
+  width: 1.3em;
+  height: 1.3em;
+  color: var(--ouro);
+}
+
+.fp__good svg path {
+  stroke: var(--tinta);
+  stroke-width: 1.6px;
+  stroke-linejoin: round;
+}
+
+.missed {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--s-2);
+}
+
+.missed li {
+  padding: 0.2em 0.6em;
+  font-size: var(--step-1);
+  font-weight: 850;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+  background: #fff;
+  border: 2px solid var(--tinta);
+  box-shadow: 2px 2px 0 var(--tinta);
+}
+
+/* ---- Numbers in a row: round reports, results, the champion ---- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: var(--s-3) var(--s-4);
+}
+
+.stat {
+  display: grid;
+  /* Values share a baseline even when a neighbour's label wraps to two lines. */
+  align-content: space-between;
+  gap: 0.1rem;
+}
+
+.stat dt {
+  font-size: var(--step--1);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgb(26 18 48 / 0.75);
+}
+
+.stat dd {
+  font-size: var(--step-2);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.split__main > .stats {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 34rem);
+  padding: var(--s-3) var(--s-5);
+}
+
+.split__main > .stats::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--giz);
+  border: var(--edge) solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: var(--lift-sm);
+}
+
+/* ---- The training table, 1 to 10 ---- */
+
+.tab {
+  columns: 13rem 2;
+  column-gap: var(--s-5);
+}
+
+.tab__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  min-height: 2.2rem;
+  border-bottom: 1px solid rgb(26 18 48 / 0.2);
+  break-inside: avoid;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab__fact {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tab__fact b {
+  font-size: var(--step-1);
+  font-weight: 900;
+  font-style: italic;
+}
+
+.tab__row.is-known .tab__fact {
+  color: rgb(26 18 48 / 0.72);
+}
+
+.tab .chip svg {
+  width: 1em;
+  height: 1em;
+}
+
+.trick {
+  display: grid;
+  justify-items: start;
+  gap: var(--s-2);
+}
+
+/* ---- Pause ---- */
+
+.pause {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: var(--pad-y) var(--pad-x);
+  background: rgb(26 18 48 / 0.62);
+  animation: fade-in 160ms var(--ease-out) both;
+}
+
+.pause__box {
+  --skew: -3deg;
+  width: min(100%, 32rem);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Toast ---- */
+
+.toast {
+  --tbg: var(--menta);
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--s-6), env(safe-area-inset-bottom));
+  z-index: 20;
+  isolation: isolate;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--pad-x));
+  padding: var(--s-3) var(--s-5);
+  font-weight: 750;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--tinta);
+  animation: toast-in 260ms var(--ease-out) both;
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--tbg);
+  border: var(--edge) solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: var(--lift-sm);
+}
+
+.toast--erro {
+  --tbg: var(--brasa-escuro);
+  color: var(--giz);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ---- Wide: the plate under the fight, panels on the right ---- */
+
+@media (min-width: 860px) {
+  .luta .qplate,
+  .treino .qplate {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    bottom: var(--pad-y);
+    translate: -50% 0;
+  }
+
+  .luta:has(> .fightpanel:not([hidden])) .qplate {
+    left: 32%;
+  }
+
+  .fightpanel {
+    position: absolute;
+    z-index: 4;
+    top: max(17vh, calc(var(--pad-y) + 7rem));
+    right: var(--pad-x);
+    width: min(34vw, 30rem);
+  }
+
+  .coach {
+    position: absolute;
+    z-index: 4;
+    top: calc(var(--pad-y) + 4.5rem);
+    right: var(--pad-x);
+    width: min(calc(40vw - 2 * var(--pad-x)), 36rem);
+  }
+
+  .coach__step {
+    position: absolute;
+    top: var(--pad-y);
+    right: var(--pad-x);
+  }
+
+  .treino > .keys {
+    position: absolute;
+    left: var(--pad-x);
+    bottom: var(--pad-y);
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.coach__step {
+  padding: var(--s-2) var(--s-5);
+  font-size: var(--step-1);
+  font-weight: 900;
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* ---- Narrow: 3D on top, everything else stacks under it ---- */
+
+@media (max-width: 859.98px) {
+  .luta,
+  .treino {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: safe flex-end;
+    gap: var(--s-4);
+    padding-top: 52dvh;
+  }
+
+  .luta:has(> .fightpanel:not([hidden])) {
+    padding-top: 34dvh;
+  }
+
+  .treino {
+    padding-top: 50dvh;
+  }
+
+  .treino:has(> .coach:not([hidden])) {
+    padding-top: 42dvh;
+  }
+
+  .treino > .topbar {
+    position: absolute;
+    top: var(--pad-y);
+    left: var(--pad-x);
+    right: var(--pad-x);
+  }
+
+  /* Panels scroll here, so they carry a flat plate instead of a skewed one that would clip. */
+  .fightpanel,
+  .coach {
+    flex: 0 1 auto;
+    width: 100%;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    background: var(--giz);
+    border: var(--edge) solid var(--tinta);
+    box-shadow: var(--lift-sm);
+  }
+
+  .fightpanel::before,
+  .coach::before {
+    display: none;
+  }
+
+  .qplate {
+    --skew: -6deg;
+    flex: none;
+    padding: var(--s-3) var(--s-4);
+  }
+
+  html.has-keypad .qplate {
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      'eq eq'
+      'hint hint'
+      'keypad dica';
+  }
+
+  html.has-keypad .keypad {
+    margin: var(--s-3) 0 0;
+  }
+
+  html.has-keypad .qplate__dica {
+    align-self: start;
+    margin: var(--s-3) 0 0 var(--s-4);
+  }
+
+  .fp__title {
+    font-size: var(--step-2);
+  }
+}
