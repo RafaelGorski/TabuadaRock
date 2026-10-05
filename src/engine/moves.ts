@@ -144,9 +144,17 @@ export interface StrikeOptions {
   power?: number;
   /** The defender goes down. */
   ko?: boolean;
+  /** A shield takes the hit: no damage, no knockback. */
+  blocked?: boolean;
   /** Called the moment the hit lands. */
   onHit?: () => void;
 }
+
+const SHIELD = '#19D3A0';
+let shieldMat: THREE.MeshBasicMaterial | undefined;
+
+/** Radius of the shield bubble around a defender. */
+const shieldRadius = (def: Actor): number => Math.max(def.worldWidth, def.worldHeight) * 0.62;
 
 /** Attack choreography: wind-up, the element flies, the hit lands with hitstop and shake. */
 export class Moves {
@@ -164,7 +172,7 @@ export class Moves {
       w.tw,
       reach,
       () => {
-        flight = this.fly(att, def, el, power).then(() => this.land(def, el, power, o, gen));
+        flight = this.fly(att, def, el, power, o.blocked ? shieldRadius(def) * 0.92 : 0).then(() => this.land(def, el, power, o, gen));
       },
       power,
     );
@@ -191,9 +199,18 @@ export class Moves {
     );
   }
 
-  private fly(att: Actor, def: Actor, el: ElementType, power: number): Promise<void> {
+  /** One puff of the aura that rises while a creature winds up; `k` grows from 0 to 1 as its attack nears. */
+  aura(att: Actor, el: ElementType, k: number): void {
+    const base = att.group.position;
+    const at = new THREE.Vector3(base.x + (Math.random() - 0.5) * att.worldWidth * 1.1, 0.1 + Math.random() * 0.3, base.z + (Math.random() - 0.5) * 0.7);
+    this.w.fx.emit('dot', at, { count: 1 + Math.round(2 * k), color: [TYPES[el].color, '#FFFFFF'], dir: UP, speed: 1.6 + 2.2 * k, spread: 0.12, life: 0.5, size: 0.12 + 0.05 * k, sizeEnd: 0, drag: 0.4 });
+  }
+
+  /** `short` stops the shot that far in front of the defender, on its shield. */
+  private fly(att: Actor, def: Actor, el: ElementType, power: number, short = 0): Promise<void> {
     const from = att.worldMouth(new THREE.Vector3());
     const to = def.worldCenter(new THREE.Vector3());
+    to.x += def.dir * short;
     if (el === 'raio') return this.bolt(from, to, power);
     const shots = power > 1 ? 3 : 1;
     const runs: Promise<void>[] = [];
@@ -209,6 +226,7 @@ export class Moves {
     const dest = to.clone();
     if (minor) dest.add(new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.4, 0.2));
     m.obj.visible = false;
+    m.obj.userData.transient = true;
     w.scene.add(m.obj);
     return w.tw
       .run(
@@ -251,6 +269,7 @@ export class Moves {
       seg.quaternion.setFromUnitVectors(UP, dir.normalize());
       g.add(seg);
     }
+    g.userData.transient = true;
     w.scene.add(g);
     w.fx.emit('bolt', from, { count: 4, color: ['#FFE014', '#FFFFFF'], speed: 2.5, life: 0.25, size: 0.2, sizeEnd: 0 });
     return w.tw
@@ -263,6 +282,7 @@ export class Moves {
   private async land(def: Actor, el: ElementType, power: number, o: StrikeOptions, gen: number): Promise<void> {
     const w = this.w;
     if (gen !== w.gen) return;
+    if (o.blocked) return this.shield(def, el, o, gen);
     const at = def.worldCenter(new THREE.Vector3());
     burst(w.fx, el, at, power);
     w.fx.emit('star', at, { count: 4 + 2 * power, color: ['#FFD21F', '#FFFFFF'], speed: 4, spread: 1, life: 0.42, size: 0.28, sizeEnd: 0 });
@@ -277,5 +297,38 @@ export class Moves {
     } else {
       await def.hurt(w.tw, power > 1 ? 1.4 : 1);
     }
+  }
+
+  /** The hit splashes on a bubble of light; the defender only braces. */
+  private async shield(def: Actor, el: ElementType, o: StrikeOptions, gen: number): Promise<void> {
+    const w = this.w;
+    const r = shieldRadius(def);
+    const center = def.worldCenter(new THREE.Vector3());
+    const at = center.clone();
+    at.x += def.dir * r * 0.92;
+    const mat = (shieldMat ??= new THREE.MeshBasicMaterial({ color: SHIELD, transparent: true, depthWrite: false }));
+    mat.opacity = 0.5;
+    const bubble = new THREE.Mesh(GEO.sphere, mat);
+    bubble.userData.transient = true;
+    bubble.position.copy(center);
+    bubble.scale.setScalar(r * 0.8);
+    w.scene.add(bubble);
+    burst(w.fx, el, at, 0.5);
+    w.fx.emit('ring', at, { count: 1, color: SHIELD, speed: 0, life: 0.3, size: 0.4, sizeEnd: 1.7, spin: 0 });
+    w.fx.emit('square', at, { count: 7, color: [SHIELD, '#FFFFFF'], speed: 3.6, spread: 1, life: 0.42, size: 0.2, sizeEnd: 0, spin: 9 });
+    w.hitstop(0.05);
+    w.rig.addTrauma(0.15);
+    o.onHit?.();
+    const brace = def.guard(w.tw);
+    await w.tw.run(
+      0.38,
+      (k) => {
+        bubble.scale.setScalar(r * (0.8 + 0.2 * k));
+        mat.opacity = 0.5 * (1 - k);
+      },
+      { ease: ease.outCubic },
+    );
+    bubble.removeFromParent();
+    if (gen === w.gen) await brace;
   }
 }

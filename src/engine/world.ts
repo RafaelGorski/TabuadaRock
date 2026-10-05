@@ -146,7 +146,7 @@ export class World {
     }
   }
 
-  /** Forgets everything in flight: tweens, particles, hitstop, pause. */
+  /** Forgets everything in flight: tweens, particles, hitstop, pause, and objects tagged `userData.transient`. */
   reset(): void {
     this.gen++;
     this.tw.abandon();
@@ -155,6 +155,7 @@ export class World {
     this.paused = false;
     this.slowmo = 1;
     for (const a of this.cast) a.reset();
+    for (const o of this.scene.children.filter((c) => c.userData.transient)) o.removeFromParent();
   }
 
   setStage(id: StageId): Stage {

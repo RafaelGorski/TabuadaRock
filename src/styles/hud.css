@@ -480,6 +480,12 @@
   color: var(--menta);
 }
 
+.pop--block {
+  font-size: var(--step-3);
+  color: var(--giz);
+  text-transform: uppercase;
+}
+
 .pop--still {
   animation: none !important;
 }

@@ -55,7 +55,7 @@ export function betweenBody(s: RoundStats, next: string, onNext: () => void, onT
       'dl',
       { class: 'stats' },
       stat('Pontos', fmt(s.score)),
-      stat('Erros neste round', String(s.mistakes)),
+      stat('Golpes levados', String(s.mistakes)),
       stat('Maior sequência', String(s.maxCombo)),
     ),
     s.perfect ? h('p', { class: 'fp__good' }, icon('star'), `Round perfeito! Mais 500 pontos.`) : null,

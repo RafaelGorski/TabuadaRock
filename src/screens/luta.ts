@@ -11,7 +11,7 @@ import { QuestionPlate } from '../ui/question';
 import { guard, isWide, progressOf } from './kit';
 import { betweenBody, explainBody, lostBody, pauseBox } from './luta-panels';
 
-type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'between' | 'lost' | 'over';
+type Phase = 'intro' | 'ask' | 'defend' | 'busy' | 'explain' | 'between' | 'lost' | 'over';
 
 const SUB_TABLE = ['As contas em ordem, do 1 ao 10', 'As mesmas contas, fora de ordem', 'Contra o relógio e sem dicas'];
 const SUB_FINAL = ['Tabuadas do 2 ao 5', 'Tabuadas do 6 ao 10', 'Tudo misturado, contra o relógio'];
@@ -60,6 +60,12 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   let lastSec = -1;
   let hinted = false;
   let retype = 0;
+  /** The rival's attack the kid is blocking. */
+  let defQ: F.Question | null = null;
+  /** The "Defenda!" call plays once per round. */
+  let warned = false;
+  let explaining: 'attack' | 'defense' = 'attack';
+  let puff = 0;
   let phase: Phase = 'intro';
   let paused = false;
   let anim: Promise<unknown> = Promise.resolve();
@@ -77,7 +83,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     plate.el,
   );
   el.addEventListener('pointerdown', (e) => {
-    if ((phase === 'ask' || phase === 'explain') && !(e.target as Element).closest('input, button, a, label')) e.preventDefault();
+    if ((phase === 'ask' || phase === 'defend' || phase === 'explain') && !(e.target as Element).closest('input, button, a, label')) e.preventDefault();
   });
 
   function layout() {
@@ -112,8 +118,12 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     lives = maxLives;
     combo = charge = roundMistakes = 0;
     missed = [];
+    defQ = null;
+    warned = false;
     hideSide();
     plate.hide();
+    plate.setTurn(null);
+    plate.setFuse(null);
     hud.setRound(r, won);
     hud.setHp(hp, hpMax);
     hud.setLives(lives, maxLives);
@@ -140,6 +150,8 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     limit = F.roundTimer(L, round);
     hud.setClock(limit);
     plate.show(F.display(q), F.spoken(q), { hint: F.hintsAllowed(round) });
+    plate.setTurn('ataque');
+    plate.setFuse(null);
     announce(F.spoken(q));
     if (app.settings.readAloud) void app.say(F.spoken(q));
   }
@@ -153,9 +165,14 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       plate.clear();
       return;
     }
+    if (phase === 'defend') {
+      if (v === F.answerOf(defQ!)) void blocked();
+      else void takeHit('defense', false);
+      return;
+    }
     if (phase !== 'ask') return;
     if (v === F.answerOf(queue[pos].q)) void hit();
-    else miss(false);
+    else void takeHit('attack', false);
   };
 
   plate.onHint = () => {
@@ -219,16 +236,94 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       if (alive()) void roundWon();
       return;
     }
-    await tw.wait(0.35);
+    await anim;
     if (!alive()) return;
     pos++;
-    ask();
+    void rivalTurn();
   }
 
-  function miss(timeout: boolean) {
-    const q = queue[pos].q;
+  /** The rival strikes back with a fact from this round; answering it in time raises a shield. */
+  async function rivalTurn() {
+    const q = F.rivalQuestion(
+      queue.slice(0, pos).map((s) => s.q),
+      new Set(missed.map(F.keyOf)),
+      round,
+      rng,
+    );
+    defQ = q;
+    phase = 'busy';
+    app.sound.threat();
+    foe.energy = 2.4;
+    if (!warned) {
+      warned = true;
+      await ann.show('Defenda!', { sub: `Acerte a conta antes do golpe de ${rv.name}`, tone: 'brasa', hold: 1.1 });
+      if (!alive()) return;
+    }
+    phase = 'defend';
+    qTime = 0;
+    lastSec = -1;
+    puff = 0;
+    limit = F.defenseTimer(round);
+    hud.setClock(limit);
+    plate.show(F.display(q), `Defenda: ${F.spoken(q)}`, { hint: false });
+    plate.setTurn('defesa');
+    plate.setFuse(1);
+    announce(`Defenda! ${F.spoken(q)}`);
+    if (app.settings.readAloud) void app.say(F.spoken(q));
+  }
+
+  async function blocked() {
+    const q = defQ!;
+    const t = qTime * 1000;
     phase = 'busy';
     plate.lock(true);
+    plate.flash('ok');
+    plate.setFuse(null);
+    plate.setTurn('defesa', 'Defendeu!');
+    app.sound.correct();
+    F.record(p.facts, q, true, t);
+    p.totals.answered++;
+    p.totals.correct++;
+    correct++;
+    ms += t;
+    combo++;
+    maxCombo = Math.max(maxCombo, combo);
+    charge = Math.min(5, charge + 1);
+    hud.setCombo(combo);
+    hud.setSuper(charge);
+    if (combo >= 2) app.sound.combo(combo);
+    const pts = F.blockPoints(t, (limit ?? F.defenseTimer(round)) * 1000);
+    score += pts;
+    hud.setScore(score);
+    pop(app, layer, hero.worldHead(), `+${pts}`, 'pop pop--points');
+    announce(`Defendeu! Mais ${pts} pontos.`);
+    anim = anim.then(() =>
+      alive()
+        ? app.moves.strike(foe, hero, rv.type, {
+            blocked: true,
+            onHit: () => {
+              app.sound.block();
+              pop(app, layer, hero.worldCenter(), 'Defendeu!', 'pop pop--block');
+            },
+          })
+        : undefined,
+    );
+    await anim;
+    if (!alive()) return;
+    await tw.wait(0.3);
+    if (alive()) ask();
+  }
+
+  /**
+   * A wrong answer or a timeout, on either turn: the rival types the right answer and the hit lands.
+   * Then the explanation, and the kid types the answer to go on.
+   */
+  async function takeHit(kind: 'attack' | 'defense', timeout: boolean) {
+    const q = kind === 'attack' ? queue[pos].q : defQ!;
+    const ans = F.answerOf(q);
+    phase = 'busy';
+    plate.lock(true);
+    plate.setFuse(null);
     plate.flash('erro');
     app.sound.wrong();
     F.record(p.facts, q, false, qTime * 1000);
@@ -239,40 +334,44 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     combo = charge = 0;
     hud.setCombo(0);
     hud.setSuper(0);
-    hud.setLives(lives, maxLives);
     if (!missed.some((m) => F.keyOf(m) === F.keyOf(q))) missed.push(q);
     if (timeout) {
       hud.setClock(0);
       void ann.show('Tempo!', { tone: 'brasa', hold: 0.5, big: false });
     }
     const ko = lives <= 0;
+    const left = lives;
+    await tw.wait(0.4);
+    if (!alive()) return;
+    plate.setTurn('rival', `${rv.name} acertou`);
+    await plate.reveal(ans);
+    if (!alive()) return;
     anim = anim.then(() =>
       alive()
         ? app.moves.strike(foe, hero, rv.type, {
             ko,
             onHit: () => {
               app.sound.impact(rv.type, 1);
+              hud.setLives(left, maxLives);
+              pop(app, layer, hero.worldHead(), String(ans), 'pop pop--hit');
               if (ko) app.sound.knockout();
             },
           })
         : undefined,
     );
-    if (ko) {
-      void anim.then(() => {
-        if (alive()) void roundLost();
-      });
-      return;
-    }
+    await anim;
+    if (!alive()) return;
+    if (ko) return void roundLost();
     phase = 'explain';
-    retype = F.answerOf(q);
+    explaining = kind;
+    retype = ans;
     const e = explainBody(q, retype);
     showSide('explain', e.title, e.body);
-    plate.lock(false);
-    plate.clear();
+    plate.setTurn(null);
     plate.hintBtn.hidden = true;
     plate.setHint(`Digite ${retype} para continuar.`, 'pedido');
-    plate.focus();
-    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${e.say}. Digite ${retype} para continuar.`);
+    plate.ready();
+    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${rv.name} respondeu ${ans} e acertou o golpe. ${e.say}. Digite ${retype} para continuar.`);
     void app.say(e.say);
   }
 
@@ -283,8 +382,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     app.sound.ok();
     app.voice.stop();
     hideSide();
-    F.requeue(queue, pos);
-    pos++;
+    if (explaining === 'attack') {
+      F.requeue(queue, pos);
+      pos++;
+    }
     await tw.wait(0.3);
     if (alive()) ask();
   }
@@ -404,7 +505,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     pauseEl = null;
     for (const c of el.children) (c as HTMLElement).inert = false;
     app.sound.ok();
-    if (phase === 'ask' || phase === 'explain') {
+    if (phase === 'ask' || phase === 'defend' || phase === 'explain') {
       plate.lock(false);
       plate.focus();
     }
@@ -432,7 +533,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       unsub = app.world.onFrame((gdt, dt) => {
         if (paused) return;
         if (phase !== 'between' && phase !== 'lost' && phase !== 'over') p.totals.playMs += dt * 1000;
-        if (phase !== 'ask') return;
+        if (phase !== 'ask' && phase !== 'defend') return;
         qTime += gdt;
         if (limit === null) return;
         const rest = limit - qTime;
@@ -442,7 +543,16 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
           hud.setClock(sec);
           if (sec > 0 && sec <= 5) app.sound.tick(sec <= 3);
         }
-        if (rest <= 0) miss(true);
+        if (phase === 'defend') {
+          const near = 1 - Math.max(0, rest / limit);
+          plate.setFuse(1 - near);
+          foe.energy = 1.4 + 1.2 * near;
+          if (!app.reduced && (puff -= gdt) <= 0) {
+            puff = 0.22 - 0.12 * near;
+            app.moves.aura(foe, rv.type, near);
+          }
+        }
+        if (rest <= 0) void takeHit(phase === 'defend' ? 'defense' : 'attack', true);
       });
       void startRound(round);
     },
@@ -453,7 +563,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       void app.saveProfile();
     },
     key(e) {
-      if (paused || (phase !== 'ask' && phase !== 'explain')) return;
+      if (paused || (phase !== 'ask' && phase !== 'defend' && phase !== 'explain')) return;
       if (/^\d$/.test(e.key) && document.activeElement !== plate.input) plate.focus();
     },
     back() {

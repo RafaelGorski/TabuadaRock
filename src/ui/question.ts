@@ -20,6 +20,7 @@ export class QuestionPlate {
   readonly hintBtn: HTMLButtonElement;
   private eq: HTMLElement;
   private hintEl: HTMLParagraphElement;
+  private turnEl: HTMLParagraphElement;
   private box: HTMLElement;
   private locked = false;
   onSubmit: (value: number) => void = () => {};
@@ -39,10 +40,13 @@ export class QuestionPlate {
       maxlength: 3,
       enterkeyhint: 'done',
       'aria-describedby': hintId,
+      // Arrow keys move the caret here; they never jump to other buttons mid-answer.
+      'data-nav': 'native',
     });
     this.box = h('span', { class: 'qplate__box' }, this.input);
     this.eq = h('div', { class: 'qplate__eq' });
     this.hintEl = h('p', { class: 'qplate__hint', id: hintId, hidden: true });
+    this.turnEl = h('p', { class: 'qplate__turn', hidden: true });
     this.hintBtn = h(
       'button',
       { type: 'button', class: 'btn btn--small qplate__dica', hidden: true, 'aria-keyshortcuts': o.hintKey === false ? undefined : 'D' },
@@ -57,6 +61,7 @@ export class QuestionPlate {
     this.el = h(
       'form',
       { class: 'qplate', novalidate: true, 'data-state': 'idle', hidden: true },
+      this.turnEl,
       h('div', { class: 'qplate__main' }, this.eq, this.hintEl),
       h('div', { class: 'qplate__side' }, this.hintBtn, this.keypad()),
     );
@@ -113,6 +118,54 @@ export class QuestionPlate {
     this.hintEl.dataset.kind = kind;
   }
 
+  /** Whose move it is, as a tag on the plate's top edge. */
+  setTurn(kind: 'ataque' | 'defesa' | 'rival' | null, label?: string): void {
+    this.turnEl.hidden = !kind;
+    if (!kind) {
+      delete this.turnEl.dataset.turn;
+      return;
+    }
+    if (this.turnEl.dataset.turn !== kind) {
+      this.turnEl.style.animation = 'none';
+      void this.turnEl.offsetWidth;
+      this.turnEl.style.animation = '';
+    }
+    this.turnEl.dataset.turn = kind;
+    const text = label ?? (kind === 'ataque' ? 'Seu ataque' : 'Defenda!');
+    this.turnEl.replaceChildren(icon(kind === 'ataque' ? 'swords' : 'shield'), h('span', {}, text));
+  }
+
+  /** The burning fuse along the plate's bottom edge: 1 is full, 0 is the rival's hit. */
+  setFuse(k: number | null): void {
+    if (k === null) {
+      delete this.el.dataset.fuse;
+      this.el.style.removeProperty('--fuse');
+      return;
+    }
+    this.el.dataset.fuse = '';
+    this.el.style.setProperty('--fuse', Math.min(1, Math.max(0, k)).toFixed(4));
+  }
+
+  /** The rival types the right answer into the box, one digit at a time. */
+  async reveal(answer: number): Promise<void> {
+    this.lock(true);
+    this.input.value = '';
+    this.flash('rival');
+    for (const d of String(answer)) {
+      await this.app.world.tw.wait(0.12);
+      this.input.value += d;
+      this.app.sound.key();
+    }
+  }
+
+  /** Empties and unlocks the box for a fresh answer on the same question. */
+  ready(): void {
+    this.input.value = '';
+    this.el.dataset.state = 'idle';
+    this.lock(false);
+    this.focus();
+  }
+
   lock(on: boolean): void {
     this.locked = on;
     this.input.readOnly = on;
@@ -127,7 +180,7 @@ export class QuestionPlate {
     if (!this.el.hidden) this.input.focus({ preventScroll: true });
   }
 
-  flash(state: 'ok' | 'erro' | 'vazio'): void {
+  flash(state: 'ok' | 'erro' | 'vazio' | 'rival'): void {
     this.el.dataset.state = 'idle';
     void this.el.offsetWidth;
     this.el.dataset.state = state;

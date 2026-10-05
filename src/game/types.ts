@@ -28,17 +28,17 @@ export function matchup(attacker: ElementType, defender: ElementType): Matchup {
   return 'neutro';
 }
 
-/** How many wrong answers the fighter survives in one round. */
+/** How many hits the fighter survives in one round. Each wrong answer or timeout, on either turn, is one hit. */
 export const MISTAKES_ALLOWED: Record<Matchup, number> = { vantagem: 7, neutro: 5, desvantagem: 4 };
 
 export function matchupText(attacker: ElementType, defender: ElementType): { kind: Matchup; title: string; text: string; lives: string } {
   const kind = matchup(attacker, defender);
   const n = MISTAKES_ALLOWED[kind];
   if (kind === 'vantagem') {
-    return { kind, title: 'Vantagem!', text: `${TYPES[attacker].phrase}.`, lives: `Você pode errar ${n} vezes por round.` };
+    return { kind, title: 'Vantagem!', text: `${TYPES[attacker].phrase}.`, lives: `Você aguenta ${n} golpes por round.` };
   }
   if (kind === 'desvantagem') {
-    return { kind, title: 'Cuidado!', text: `${TYPES[defender].phrase}.`, lives: `Você pode errar só ${n} vezes por round.` };
+    return { kind, title: 'Cuidado!', text: `${TYPES[defender].phrase}.`, lives: `Você aguenta só ${n} golpes por round.` };
   }
-  return { kind, title: 'Luta equilibrada', text: 'Nenhum tipo leva vantagem.', lives: `Você pode errar ${n} vezes por round.` };
+  return { kind, title: 'Luta equilibrada', text: 'Nenhum tipo leva vantagem.', lives: `Você aguenta ${n} golpes por round.` };
 }

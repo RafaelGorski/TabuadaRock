@@ -119,7 +119,7 @@ export const recordes: ScreenFactory<'recordes'> = (app, params) => {
       filter,
       table(
         'Melhores lutas',
-        ['Posição', 'Lutador', 'Tabuada', 'Pontos', 'Estrelas', 'Erros', 'Tempo por acerto', 'Data'],
+        ['Posição', 'Lutador', 'Tabuada', 'Pontos', 'Estrelas', 'Golpes levados', 'Tempo por acerto', 'Data'],
         list.map((a, i) => {
           const p = byId.get(a.profileId);
           return [`${i + 1}º`, p ? who(p) : a.name, short(a.levelId), fmt(a.score), stars(a.stars), String(a.mistakes), a.avgMs ? fmtSec(a.avgMs) : '–', fmtDate(a.at)];

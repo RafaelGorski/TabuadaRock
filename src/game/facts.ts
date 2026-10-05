@@ -254,9 +254,32 @@ export function roundTimer(level: LevelDef, round: RoundNumber): number | null {
 
 export const hintsAllowed = (round: RoundNumber): boolean => round < 3;
 
+/**
+ * The rival attacks with a fact the kid already answered this round, so defending is review,
+ * never a spoiler. The fact just answered sits out, and missed facts come back more often.
+ */
+export function rivalQuestion(answered: readonly Question[], missed: ReadonlySet<string>, round: RoundNumber, rng: Rng): Question {
+  if (!answered.length) throw new Error('O rival só ataca depois do primeiro golpe');
+  const byKey = new Map(answered.map((q) => [keyOf(q), q]));
+  const last = keyOf(answered[answered.length - 1]);
+  const pool = byKey.size > 1 ? [...byKey.values()].filter((q) => keyOf(q) !== last) : [...byKey.values()];
+  const weight = (q: Question) => (missed.has(keyOf(q)) ? 3 : q.b === 1 || q.b === 10 ? 0.35 : 1);
+  const pick = pickWeighted(pool, weight, 1, rng)[0];
+  return makeQuestion(pick.a, pick.b, { review: pick.review, flip: round > 1 && pick.a !== pick.b && rng() < 0.5 });
+}
+
+/** Seconds to answer before the rival's attack lands. */
+export const defenseTimer = (round: RoundNumber): number => [12, 10, 8][round - 1];
+
+/** A block is worth 50 points, up to 100 when it comes fast. */
+export function blockPoints(ms: number, limitMs: number): number {
+  return 50 + Math.round(50 * Math.max(0, Math.min(1, 1 - ms / limitMs)));
+}
+
+/** Every hit taken counts, from a wrong attack or a failed block. */
 export function starsFor(mistakes: number): 1 | 2 | 3 {
-  if (mistakes <= 1) return 3;
-  if (mistakes <= 4) return 2;
+  if (mistakes <= 2) return 3;
+  if (mistakes <= 6) return 2;
   return 1;
 }
 

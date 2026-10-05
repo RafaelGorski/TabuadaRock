@@ -216,6 +216,20 @@ export class Sound {
     this.tone(160, 0.32, { type: 'sawtooth', gain: 0.1, slide: 110, filter: 900, detune: 18 });
   }
 
+  /** A hit bouncing off a shield: bright ping over a short thud. */
+  block(): void {
+    this.tone(1480, 0.22, { type: 'square', gain: 0.07, slide: 1100, filter: 5200 });
+    this.tone(2220, 0.18, { type: 'triangle', gain: 0.08 });
+    this.noise(0.12, { type: 'highpass', freq: 4200, gain: 0.18 });
+    this.tone(95, 0.12, { type: 'sine', gain: 0.25, slide: 60 });
+  }
+
+  /** The rival winds up its attack. */
+  threat(): void {
+    this.tone(220, 0.12, { type: 'sawtooth', gain: 0.1, filter: 1400 });
+    this.tone(165, 0.22, { type: 'sawtooth', gain: 0.1, filter: 1200, when: this.now + 0.11 });
+  }
+
   combo(n: number): void {
     const f = 523 * Math.pow(2, Math.min(n, 14) / 12);
     this.tone(f, 0.09, { type: 'square', gain: 0.06, filter: 4000 });

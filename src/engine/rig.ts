@@ -382,6 +382,30 @@ export class Actor {
     );
   }
 
+  /** Braces behind a shield: a short lean into the hit, no knockback. */
+  async guard(tw: Tweens): Promise<void> {
+    const d = this.dir;
+    this.energy = 1.8;
+    await tw.run(
+      0.08,
+      (k) => {
+        this.root.position.x = -d * 0.1 * k;
+        this.pose.rotation.x = 0.12 * k;
+        this.pose.scale.set(1 + 0.1 * k, 1 - 0.12 * k, 1 + 0.1 * k);
+      },
+      { ease: ease.outQuad },
+    );
+    await tw.run(
+      0.3,
+      (k) => {
+        this.root.position.x = -d * 0.1 * (1 - k);
+        this.pose.rotation.x = 0.12 * (1 - k);
+        this.pose.scale.set(lerp(1.1, 1, k), lerp(0.88, 1, k), lerp(1.1, 1, k));
+      },
+      { ease: ease.outBack },
+    );
+  }
+
   async knockout(tw: Tweens): Promise<void> {
     const d = this.dir;
     this.flash = 1;

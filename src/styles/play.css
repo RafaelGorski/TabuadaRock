@@ -116,6 +116,19 @@
   animation: box-pop 300ms var(--ease-out);
 }
 
+/* The rival types the right answer in its own colors. */
+.qplate[data-state='rival'] .qplate__box::before {
+  background: var(--brasa-escuro);
+}
+
+.qplate[data-state='rival'] .answer {
+  color: var(--giz);
+}
+
+.qplate[data-state='rival'] .qplate__box {
+  animation: box-pop 260ms var(--ease-out);
+}
+
 @keyframes box-pop {
   45% {
     transform: scale(1.14);
@@ -156,6 +169,67 @@
 .qplate__dica {
   grid-area: dica;
   margin-left: var(--s-5);
+}
+
+/* ---- Turns: a tag rides the plate's top edge; on defense a fuse burns along the bottom ---- */
+
+.qplate__turn {
+  --bg: var(--cobalto);
+  position: absolute;
+  top: 0;
+  left: var(--s-5);
+  translate: 0 -62%;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.2em 0.85em;
+  font-size: var(--step--1);
+  font-weight: 850;
+  font-style: italic;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--giz);
+  animation: turn-in 240ms var(--ease-out);
+}
+
+.qplate__turn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg);
+  border: 2px solid var(--tinta);
+  transform: skewX(var(--skew));
+  box-shadow: 3px 3px 0 var(--tinta);
+}
+
+.qplate__turn[data-turn='defesa'],
+.qplate__turn[data-turn='rival'] {
+  --bg: var(--brasa-escuro);
+}
+
+.qplate__turn svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+/* --fuse runs from 1 to 0: the lit end burns from the rival's side toward yours. */
+.qplate[data-fuse]::before {
+  background:
+    linear-gradient(var(--ouro), var(--ouro)) calc(var(--fuse) * 100%) 100% / 12px 12px no-repeat,
+    linear-gradient(var(--brasa), var(--brasa)) 0 100% / calc(var(--fuse) * 100%) 12px no-repeat,
+    linear-gradient(rgb(26 18 48 / 0.14), rgb(26 18 48 / 0.14)) 0 100% / 100% 12px no-repeat,
+    var(--giz);
 }
 
 /* ---- On-screen keypad: on by choice, always on touch screens ---- */

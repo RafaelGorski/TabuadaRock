@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   answerOf,
+  blockPoints,
   buildRound,
+  defenseTimer,
   display,
   explain,
   explainFact,
@@ -12,6 +14,7 @@ import {
   pointsFor,
   record,
   requeue,
+  rivalQuestion,
   spreadRepeats,
   starsFor,
   type FactStats,
@@ -124,9 +127,51 @@ describe('rounds', () => {
   });
 });
 
+describe('o turno do rival', () => {
+  const answered = [2, 3, 4, 5].map((b) => makeQuestion(6, b));
+
+  it('attacks with a fact answered this round, never the one just answered', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const q = rivalQuestion(answered, new Set(), 2, makeRng(seed));
+      expect(q.a).toBe(6);
+      expect([2, 3, 4]).toContain(q.b);
+    }
+  });
+
+  it('repeats the fact when it is the only one, and only flips after round 1', () => {
+    expect(keyOf(rivalQuestion([makeQuestion(2, 1)], new Set(), 1, makeRng(3)))).toBe('2x1');
+    const flips = (round: 1 | 2) => Array.from({ length: 60 }, (_, s) => rivalQuestion(answered, new Set(), round, makeRng(s + 1))).filter((q) => q.flip).length;
+    expect(flips(1)).toBe(0);
+    expect(flips(2)).toBeGreaterThan(10);
+  });
+
+  it('brings missed facts back more often and never asks a reverse question', () => {
+    const seen = [makeQuestion(6, 7, { reverse: true }), ...answered];
+    let missedPicks = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const q = rivalQuestion(seen, new Set(['6x3']), 3, makeRng(seed));
+      expect(q.reverse).toBe(false);
+      expect(answerOf(q)).toBe(q.a * q.b);
+      if (q.b === 3) missedPicks++;
+    }
+    expect(missedPicks).toBeGreaterThan(110);
+  });
+
+  it('gives less time to block as the rounds go on', () => {
+    expect([1, 2, 3].map((r) => defenseTimer(r as 1 | 2 | 3))).toEqual([12, 10, 8]);
+  });
+});
+
 describe('pontos, estrelas e domínio', () => {
-  it('stars follow the mistakes', () => {
-    expect([0, 1, 2, 4, 5, 9].map(starsFor)).toEqual([3, 3, 2, 2, 1, 1]);
+  it('stars follow the hits taken', () => {
+    expect([0, 1, 2, 3, 6, 7, 12].map(starsFor)).toEqual([3, 3, 3, 2, 2, 1, 1]);
+  });
+
+  it('a block is worth more when it comes fast', () => {
+    expect(blockPoints(0, 10000)).toBe(100);
+    expect(blockPoints(5000, 10000)).toBe(75);
+    expect(blockPoints(10000, 10000)).toBe(50);
+    expect(blockPoints(14000, 10000)).toBe(50);
   });
 
   it('fast, combo and reverse answers earn more; hinted answers earn less', () => {
@@ -162,7 +207,7 @@ describe('pontos, estrelas e domínio', () => {
     expect(queue.filter((s) => s.q.b === 3 && s.damage)).toHaveLength(1);
   });
 
-  it('the type matchup sets how many mistakes a round allows', () => {
+  it('the type matchup sets how many hits a round allows', () => {
     const adv = matchupText('agua', 'fogo');
     expect(adv.kind).toBe('vantagem');
     expect(adv.lives).toContain(String(MISTAKES_ALLOWED.vantagem));

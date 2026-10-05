@@ -1,6 +1,6 @@
 # Tabuada Rock
 
-A 3D fighting game in Brazilian Portuguese for learning the multiplication tables from 2 to 10. Every correct answer lands a hit. Climb the tower one table at a time until you're the champion.
+A 3D fighting game in Brazilian Portuguese for learning the multiplication tables from 2 to 10. Every correct answer lands a hit, and the rival strikes back with its own sums. Climb the tower one table at a time until you're the champion.
 
 **Play:** https://rafaelgorski.github.io/TabuadaRock/
 
@@ -16,7 +16,9 @@ Works in any recent desktop browser. Phones and tablets are supported with an on
    - **Round 2:** the facts shuffled.
    - **Round final:** shuffled facts plus review from earlier tables, with a gentle clock.
 4. **Answer** by typing the number and pressing **Enter**, or with the on-screen keypad. **DICA** shows a hint.
-5. **Stars** depend on mistakes in the whole fight: at most 1 mistake earns ★★★, at most 4 earns ★★, and any win earns ★. Beating a table recruits its guardian to your team.
+5. **Turns:** a correct answer is your attack. Then the rival attacks with a fact you already answered in this round. Answer it before the fuse on the plate burns out to block with a shield. A wrong answer or a timeout, on either turn, lets the rival type the right answer and land a hit. Then the game explains the fact and you type it to go on.
+6. **Stars** depend on the hits you take in the whole fight: at most 2 earns ★★★, at most 6 earns ★★, and any win earns ★. Beating a table recruits its guardian to your team.
+7. **Keyboard:** the arrow keys move between buttons on every screen, and **Enter** or **Space** picks.
 
 ### Records (*Recordes*)
 
