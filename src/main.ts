@@ -6,6 +6,7 @@ import './styles/screens.css';
 import './styles/play.css';
 import './styles/ladder.css';
 import './styles/board.css';
+import './styles/rewards.css';
 import { App } from './app';
 import { Store } from './data/store';
 import { SCREENS } from './screens';

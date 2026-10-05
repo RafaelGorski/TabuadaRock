@@ -26,6 +26,12 @@ Works in any recent desktop browser. Phones and tablets are supported with an on
 - **Duelo:** two players compared table by table.
 - **Domínio:** a map of all 90 facts, showing which ones each player has mastered.
 
+### Missão Rock and Selos de Domínio
+
+*Missão Rock* is an optional, parent-controlled household reward system. A parent opts in with a local PIN and acknowledges that fulfilment happens outside the game. Children earn deterministic **SELOS** only from a trained table's first clear or a due spaced review: 8/10, 9/10 and 10/10 first-try facts pay 3, 4 and 5 seals. Hints and requeued corrections do not count as first attempts. There are no streaks, random rewards, purchases, payment details, cash value or in-game store.
+
+The ledger enforces at most two scoring sessions and 10 seals per calendar day, and 30 seals per week. Reviews are scheduled after 48 hours, then 7 days, then at least every 14 days; missed days do not remove balance or progress. At 120 or 285 seals a child can **PEDIR AO RESPONSÁVEL** an 800 or 2,400 V-Bucks package. The parent sees the ledger, caps, budget and request, and must approve again with the PIN. Approval subtracts only the requested threshold; any external purchase is a family decision outside TabuadaRock.
+
 ## Saved progress
 
 Everything is saved in the browser, on the device itself. There is no server and no account.

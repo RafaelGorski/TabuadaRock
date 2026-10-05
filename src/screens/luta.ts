@@ -3,7 +3,7 @@ import type { Actor } from '../engine/world';
 import { COUNTER_BONUS, pickAttack, superOf, tossOpener } from '../game/attacks';
 import { CREATURES } from '../game/creatures';
 import * as F from '../game/facts';
-import { levelById } from '../game/levels';
+import { LEVELS, levelById } from '../game/levels';
 import { MISTAKES_ALLOWED, matchup } from '../game/types';
 import { announce, fill, h, type Child } from '../ui/dom';
 import { FightHud } from '../ui/hud';
@@ -11,6 +11,7 @@ import { Announcer, pop } from '../ui/parts';
 import { QuestionPlate } from '../ui/question';
 import { guard, isWide, progressOf } from './kit';
 import { explainBody, lostBody, pauseBox } from './luta-panels';
+import { capAllows, canFinal, classifyReview, eligiblePayout, nextDue, type SessionKind } from '../game/selos';
 
 type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'lost' | 'over';
 
@@ -62,6 +63,8 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   let limit: number | null = null;
   let lastSec = -1;
   let hinted = false;
+  const attempted = new Set<string>();
+  let firstTry = 0;
   let retype = 0;
   /** Points multiplier earned when the rival opens the round. */
   let counter = 1;
@@ -177,6 +180,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     qTime = 0;
     lastSec = -1;
     hinted = false;
+    if (!attempted.has(F.keyOf(q)) && !hinted) { /* first response is tracked on submit */ }
     limit = null;
     hud.setClock(limit);
     plate.show(F.display(q), F.spoken(q), { hint: true });
@@ -212,6 +216,11 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   async function hit() {
     const slot = queue[pos];
     const q = slot.q;
+    const key = F.keyOf(q);
+    if (!attempted.has(key)) {
+      attempted.add(key);
+      if (!hinted) firstTry++;
+    }
     const t = qTime * 1000;
     phase = 'busy';
     plate.lock(true);
@@ -273,6 +282,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
 
   function miss(timeout: boolean) {
     const q = queue[pos].q;
+    attempted.add(F.keyOf(q));
     phase = 'busy';
     plate.lock(true);
     plate.flash('erro');
@@ -391,6 +401,35 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     const stars = F.starsFor(mistakes);
     const prevBest = lp.best;
     const firstClear = !lp.cleared;
+    const eventId = `${p.id}:${L.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    const rewardState = await app.store.getRewards(p.id);
+    const trained = L.table !== null && lp.trained;
+    const schedule = L.table === null ? undefined : rewardState.reviews[String(L.table)];
+    let kind: SessionKind = L.table === null ? 'final' : firstClear && trained ? 'novo' : schedule && schedule.dueAt && Date.now() >= schedule.dueAt ? classifyReview(schedule, Date.now()) : 'manutenção';
+    if (L.table !== null && (!firstClear && (!schedule || !schedule.dueAt || Date.now() < schedule.dueAt))) kind = 'manutenção';
+    const allCleared = LEVELS.filter((level) => level.table !== null).every((level) => p.levels[level.id]?.cleared);
+    const eligible = rewardState.settings.enabled && (L.table === null ? canFinal(rewardState.finalLastAt, Date.now(), allCleared) : (trained && (firstClear || !!schedule && !!schedule.dueAt && Date.now() >= schedule.dueAt)));
+    const candidate = eligible ? eligiblePayout(kind, firstTry, true) : 0;
+    const seals = eligible && capAllows(rewardState.ledger, Date.now(), candidate) ? candidate : 0;
+    if (seals > 0) {
+      const at = Date.now();
+      await app.store.creditRewards(p.id, { eventId, profileId: p.id, table: L.table ?? 'final', kind, firstTry, seals, at, dueAt: L.table === null ? undefined : nextDue(kind, at) });
+      if (L.table !== null) {
+        const fresh = await app.store.getRewards(p.id);
+        const r = fresh.reviews[String(L.table)] ?? { credited: 0, mastered: false };
+        r.firstClearAt ??= at;
+        r.credited++;
+        r.dueAt = nextDue(kind, at);
+        r.mastered = r.mastered || r.credited >= 3 && firstTry >= 8;
+        fresh.reviews[String(L.table)] = r;
+        await app.store.saveRewards(p.id, fresh);
+      } else {
+        const fresh = await app.store.getRewards(p.id);
+        fresh.finalLastAt = Date.now();
+        await app.store.saveRewards(p.id, fresh);
+      }
+    }
+    const rewardMessage = !rewardState.settings.enabled ? 'Recompensas desativadas pelo responsável.' : seals ? `+${seals} SELOS` : eligible ? 'Esta sessão não atingiu os critérios de selos.' : 'Treine a tabuada e volte quando a revisão estiver disponível.';
     lp.cleared = true;
     lp.stars = Math.max(lp.stars, stars);
     lp.best = Math.max(lp.best, score);
@@ -414,7 +453,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     app.music.jingle('vitoria');
     await ann.show('Vitória!', { hold: 1.2 });
     if (!alive()) return;
-    app.go('resultado', { level: L.id, partner, score, stars, mistakes, correct, ms: Math.round(ms), maxCombo, perfect, prevBest, rank, recruited, crowned, firstClear });
+    app.go('resultado', { level: L.id, partner, score, stars, mistakes, correct, ms: Math.round(ms), maxCombo, perfect, prevBest, rank, recruited, crowned, firstClear, firstTry, seals, rewardMessage });
   }
 
   function quit() {

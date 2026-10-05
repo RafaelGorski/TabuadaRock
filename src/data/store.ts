@@ -2,6 +2,7 @@ import { ALL_CREATURES, STARTERS, type CreatureId } from '../game/creatures';
 import type { FactStat, FactStats } from '../game/facts';
 import { LEVELS } from '../game/levels';
 import { LS_PREFIX, MapBackend, openBackend, type Backend, type BackendKind } from './db';
+import { DEFAULT_BUDGET_CENTS, type RewardLedgerEntry, type ReviewSchedule } from '../game/selos';
 
 export interface LevelProgress {
   trained: boolean;
@@ -61,6 +62,52 @@ export interface Settings {
   shake: boolean;
   keypad: boolean;
   volume: number;
+}
+
+export interface RewardSettings {
+  enabled: boolean;
+  pin: string;
+  budgetCents: number;
+  paused: boolean;
+  rollingSpendCents: number;
+  approvals: number[];
+}
+
+export interface RewardState {
+  balance: number;
+  ledger: RewardLedgerEntry[];
+  reviews: Record<string, ReviewSchedule>;
+  settings: RewardSettings;
+  pending: { prize: 'small' | 'large'; requestedAt: number } | null;
+  finalLastAt?: number;
+}
+
+export const DEFAULT_REWARD_SETTINGS: RewardSettings = {
+  enabled: false, pin: '', budgetCents: DEFAULT_BUDGET_CENTS, paused: false, rollingSpendCents: 0, approvals: [],
+};
+
+export function normalizeRewardState(v: unknown): RewardState {
+  const x = isObj(v) ? v : {};
+  const s = isObj(x.settings) ? x.settings : {};
+  const reviews: Record<string, ReviewSchedule> = {};
+  if (isObj(x.reviews)) for (const [k, raw] of Object.entries(x.reviews)) {
+    const r = isObj(raw) ? raw : {};
+    reviews[k] = { firstClearAt: num(r.firstClearAt) || undefined, dueAt: num(r.dueAt) || undefined, credited: Math.max(0, num(r.credited)), mastered: bool(r.mastered) };
+  }
+  const ledger = Array.isArray(x.ledger) ? x.ledger.filter(isObj).map((e) => ({ ...e, at: num(e.at), seals: Math.max(0, num(e.seals)) })) as RewardLedgerEntry[] : [];
+  return {
+    balance: Math.max(0, num(x.balance)),
+    ledger,
+    reviews,
+    settings: {
+      enabled: bool(s.enabled), pin: typeof s.pin === 'string' ? s.pin : '',
+      budgetCents: Math.max(0, num(s.budgetCents, DEFAULT_BUDGET_CENTS)),
+      paused: bool(s.paused), rollingSpendCents: Math.max(0, num(s.rollingSpendCents)),
+      approvals: Array.isArray(s.approvals) ? s.approvals.filter((n): n is number => typeof n === 'number') : [],
+    },
+    pending: isObj(x.pending) && (x.pending.prize === 'small' || x.pending.prize === 'large') ? { prize: x.pending.prize, requestedAt: num(x.pending.requestedAt) } : null,
+    finalLastAt: num(x.finalLastAt) || undefined,
+  };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -429,6 +476,25 @@ export class Store {
   async saveSettings(s: Settings): Promise<void> {
     await this.be.put('meta', { key: 'settings', value: normalizeSettings(s) });
     this.scheduleMirror();
+  }
+
+  async getRewards(profileId: string): Promise<RewardState> {
+    const rec = await this.be.get<{ key: string; value: unknown }>('meta', `rewards:${profileId}`);
+    return normalizeRewardState(rec?.value);
+  }
+
+  async saveRewards(profileId: string, state: RewardState): Promise<void> {
+    await this.be.put('meta', { key: `rewards:${profileId}`, value: normalizeRewardState(state) });
+    this.scheduleMirror();
+  }
+
+  async creditRewards(profileId: string, entry: RewardLedgerEntry): Promise<RewardState> {
+    const state = await this.getRewards(profileId);
+    if (state.ledger.some((e) => e.eventId === entry.eventId)) return state;
+    state.ledger.push(entry);
+    state.balance += entry.seals;
+    await this.saveRewards(profileId, state);
+    return state;
   }
 
   async getActiveProfileId(): Promise<string | null> {

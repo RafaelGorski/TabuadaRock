@@ -1,0 +1,29 @@
+.missao {
+  min-height: 100%;
+  padding: var(--pad-y) var(--pad-x);
+  display: grid;
+  place-items: center;
+}
+
+.missao__body {
+  width: min(100%, 72rem);
+  padding: var(--s-6);
+  max-height: 94vh;
+  overflow: auto;
+}
+
+.missao__balance { font-size: var(--step-2); }
+.missao__balance strong { color: var(--cobalto); }
+.missao__copy, .missao__paper { max-width: 70ch; }
+.missao__paper { border: var(--edge) solid var(--tinta); padding: var(--s-4); background: var(--giz); }
+.missao__meter { height: 1.8rem; margin: var(--s-4) 0; padding: .25rem; color: var(--giz); background: var(--tinta); text-align: center; }
+.missao__meter::before { content: ''; display: block; height: 100%; width: calc(var(--value, 0) * 1%); background: var(--ouro); }
+.missao__prizes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); margin: var(--s-6) 0; }
+.missao__prize { padding: var(--s-5); display: grid; gap: var(--s-3); }
+.missao__prize h2 { margin: 0; color: var(--ouro); }
+.missao__controls { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-5); }
+.res__reward { width: fit-content; max-width: 100%; padding: var(--s-3) var(--s-4); }
+@media (max-width: 700px) {
+  .missao__prizes { grid-template-columns: 1fr; }
+  .missao__body { padding: var(--s-4); }
+}
