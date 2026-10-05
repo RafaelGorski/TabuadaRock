@@ -14,6 +14,14 @@ import { explainBody, lostBody, pauseBox } from './luta-panels';
 
 type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'lost' | 'over';
 
+function battleVariant(...parts: (string | number)[]): number {
+  let hash = 17;
+  for (const part of parts) {
+    for (const c of String(part)) hash = (hash * 31 + c.charCodeAt(0)) % 97;
+  }
+  return (hash + Math.floor(Math.random() * 31)) % 97;
+}
+
 export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   const alive = guard(app);
   const L = levelById(level);
@@ -23,6 +31,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   const rv = CREATURES[L.rival];
   const maxLives = MISTAKES_ALLOWED[matchup(me.type, rv.type)];
   const song = L.table === null ? 'chefe' : 'luta';
+  const variant = battleVariant(partner, L.rival, stage ?? L.stage);
   const rng = F.makeRng();
   const tw = app.world.tw;
   const hud = new FightHud(app, partner, L.rival);
@@ -240,6 +249,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
         power: atk.power,
         ko,
         onHit: () => {
+          void app.say(String(ans), { rate: 0.92 });
           app.sound.impact(atk.type, atk.power);
           pop(app, layer, foe.worldHead(), String(ans), 'pop pop--hit');
           hud.setHp(left, hpMax);
@@ -365,7 +375,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
         retry: () => {
           app.sound.ok();
           ({ score, mistakes, correct, ms, maxCombo, perfect } = snap);
-          app.music.play(song);
+          app.music.play(song, 0, variant);
           void startRound();
         },
         train: L.table === null ? null : () => app.go('treino', { level, partner }),
@@ -441,7 +451,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   return {
     el,
     enter() {
-      app.music.play(song);
+      app.music.play(song, 0, variant);
       app.world.setStage(stage ?? L.stage);
       const [a, b] = app.world.setFighters(partner, L.rival);
       hero = a;

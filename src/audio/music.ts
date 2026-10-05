@@ -6,6 +6,30 @@ interface Chord {
   q: Quality;
 }
 
+function variantSong(base: Song, variant: number): Song {
+  if (!variant) return base;
+  const shift = Math.abs(variant) % 7;
+  const rotate = (pattern?: string): string | undefined => {
+    if (!pattern) return pattern;
+    const offset = (shift * 2) % pattern.length;
+    return pattern.slice(offset) + pattern.slice(0, offset);
+  };
+  const bars = base.bars.map((chord, i) => (i % 2 === shift % 2 ? { ...chord, root: chord.root + (shift % 3) - 1 } : chord));
+  return {
+    ...base,
+    bars,
+    bass: rotate(base.bass)!,
+    bassAlt: rotate(base.bassAlt),
+    kick: rotate(base.kick)!,
+    snare: rotate(base.snare)!,
+    hat: rotate(base.hat)!,
+    tamb: rotate(base.tamb),
+    stab: rotate(base.stab),
+    arp: rotate(base.arp),
+    lead: base.lead?.map(rotate) as string[] | undefined,
+  };
+}
+
 /**
  * Patterns are 16 characters per bar (sixteenth notes).
  * Drums: 'x' hit, 'X' accent, '.' rest.
@@ -162,7 +186,7 @@ export type JingleName = keyof typeof JINGLES;
 /** Lookahead step sequencer: a 25 ms timer schedules notes 120 ms ahead on the audio clock. */
 export class Music {
   private song: Song | null = null;
-  private current: SongName | null = null;
+  private current: string | null = null;
   private step = 0;
   private next = 0;
   private timer = 0;
@@ -172,14 +196,15 @@ export class Music {
   constructor(private s: Sound) {}
 
   get playing(): SongName | null {
-    return this.current;
+    return this.current ? (this.current.split(':', 1)[0] as SongName) : null;
   }
 
-  play(name: SongName, intensity = 0): void {
+  play(name: SongName, intensity = 0, variant = 0): void {
     this.intensity = intensity;
-    if (this.current === name) return;
-    this.current = name;
-    this.song = SONGS[name];
+    const key = `${name}:${variant}`;
+    if (this.current === key) return;
+    this.current = key;
+    this.song = variantSong(SONGS[name], variant);
     this.step = 0;
     this.arpI = 0;
     this.next = this.s.now + 0.1;
