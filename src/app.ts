@@ -166,8 +166,8 @@ export class App {
   }
 
   /** Narrator line, if the narrator is on. */
-  say(text: string): Promise<void> {
-    return this.voice.say(text);
+  say(text: string, options?: Parameters<Voice['say']>[1]): Promise<void> {
+    return this.voice.say(text, options);
   }
 
   toast(text: string, kind: 'ok' | 'erro' = 'ok'): void {

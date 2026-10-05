@@ -14,6 +14,7 @@ export class Voice {
   enabled = true;
   private voice: SpeechSynthesisVoice | null = null;
   private loaded = false;
+  private request = 0;
 
   constructor(private sound: Sound) {
     if (!this.available) return;
@@ -43,7 +44,11 @@ export class Voice {
 
   say(text: string, o: SayOpts = {}): Promise<void> {
     if (!this.enabled || !this.available || !this.speaksPortuguese || !text.trim()) return Promise.resolve();
-    if (o.interrupt !== false) speechSynthesis.cancel();
+    const request = ++this.request;
+    if (o.interrupt !== false) {
+      speechSynthesis.cancel();
+      this.sound.duck(false);
+    }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = this.voice?.lang ?? 'pt-BR';
     if (this.voice) u.voice = this.voice;
@@ -56,7 +61,7 @@ export class Voice {
       const done = () => {
         if (settled) return;
         settled = true;
-        if (!speechSynthesis.speaking) this.sound.duck(false);
+        if (request === this.request) this.sound.duck(false);
         resolve();
       };
       u.onend = done;
@@ -68,6 +73,7 @@ export class Voice {
 
   stop(): void {
     if (!this.available) return;
+    this.request++;
     speechSynthesis.cancel();
     this.sound.duck(false);
   }
