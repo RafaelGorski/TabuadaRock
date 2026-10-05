@@ -244,12 +244,13 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     announce(`Certo! ${atk.name}. Mais ${pts} pontos${doubled ? ', em dobro pelo revide' : ''}.`);
     anim = anim.then(async () => {
       if (!alive()) return;
+      let resultSpeech: Promise<void> = Promise.resolve();
       if (big) void ann.show(atk.name, { sub: 'Super golpe!', hold: 0.8, big: false });
       await app.moves.strike(hero, foe, atk.type, {
         power: atk.power,
         ko,
         onHit: () => {
-          void app.say(String(ans), { rate: 0.92 });
+          resultSpeech = app.say(String(ans), { rate: 0.92 });
           app.sound.impact(atk.type, atk.power);
           pop(app, layer, foe.worldHead(), String(ans), 'pop pop--hit');
           hud.setHp(left, hpMax);
@@ -257,13 +258,14 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
           if (ko) app.sound.knockout();
         },
       });
+      await resultSpeech;
     });
     if (ko) {
       await anim;
       if (alive()) void roundWon();
       return;
     }
-    await tw.wait(0.35);
+    await anim;
     if (!alive()) return;
     pos++;
     ask();
