@@ -2,13 +2,17 @@ import type { ScreenFactory } from '../app';
 import { CREATURES, type CreatureId } from '../game/creatures';
 import type { Actor } from '../engine/world';
 import { h } from '../ui/dom';
-import { pop } from '../ui/parts';
+import { pop, portrait, typeChip } from '../ui/parts';
 import { guard, safeAreas } from './kit';
 
 const PAIRS: [CreatureId, CreatureId][] = [
   ['capibolha', 'tesourada'],
   ['brasonca', 'jacarock'],
   ['folhandua', 'rolachoque'],
+  ['saci', 'curupira'],
+  ['iara', 'boto'],
+  ['cuca', 'mula'],
+  ['caipora', 'boitata'],
 ];
 
 /** Cold open: a demo fight lands 6 × 7 = 42, the lockup slams in, any key starts. */
@@ -32,7 +36,26 @@ export const attract: ScreenFactory<'attract'> = (app) => {
   );
   const touch = matchMedia('(pointer: coarse)').matches;
   const start = h('button', { type: 'button', class: 'btn btn--primary btn--big attract__start', 'data-autofocus': '' }, touch ? 'Toque para jogar' : 'Aperte Enter ou clique para jogar');
-  const el = h('section', { 'aria-label': 'Tabuada Rock', class: 'attract' }, layer, lockup, demo, start);
+  const folklore = ['saci', 'curupira', 'iara', 'cuca', 'boto', 'mula', 'caipora'] as CreatureId[];
+  const roster = h(
+    'div',
+    { class: 'attract__roster', 'aria-hidden': 'true' },
+    h('span', { class: 'attract__roster-title' }, 'Folclore brasileiro'),
+    h(
+      'div',
+      { class: 'attract__roster-list' },
+      folklore.map((id) =>
+        h(
+          'div',
+          { class: 'attract__roster-card' },
+          portrait(app, id, 'attract__roster-img'),
+          h('span', { class: 'attract__roster-name' }, CREATURES[id].name),
+          typeChip(CREATURES[id].type),
+        ),
+      ),
+    ),
+  );
+  const el = h('section', { 'aria-label': 'Tabuada Rock', class: 'attract' }, layer, lockup, roster, demo, start);
   let left = false;
   let off = () => {};
 

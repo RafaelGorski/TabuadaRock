@@ -276,6 +276,76 @@ legend:is(.field__label, .info__label) {
   pointer-events: none;
 }
 
+.attract__roster {
+  grid-row: 3;
+  align-self: end;
+  width: min(100%, 68rem);
+  padding-inline: var(--s-3);
+  pointer-events: none;
+}
+
+.attract__roster-title {
+  display: inline-block;
+  padding: 0.2em 0.8em;
+  color: var(--giz);
+  background: var(--tinta);
+  font-size: var(--step--1);
+  font-weight: 850;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transform: skewX(var(--skew));
+}
+
+.attract__roster-list {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(4.2rem, 1fr));
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.attract__roster-card {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  padding: 0.2rem;
+  color: var(--giz);
+  background: rgb(26 18 48 / 0.72);
+  box-shadow: 3px 3px 0 rgb(26 18 48 / 0.3);
+}
+
+.attract__roster-img {
+  width: clamp(2.7rem, 7vw, 5rem);
+  height: clamp(2.7rem, 7vw, 5rem);
+  object-fit: contain;
+}
+
+.attract__roster-name {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+  font-weight: 850;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attract__roster-card .chip {
+  margin-top: 0.2rem;
+  padding: 0.05em 0.4em;
+  font-size: 0.58rem;
+}
+
+@media (max-width: 42rem) {
+  .attract__roster-list {
+    grid-template-columns: repeat(4, minmax(4rem, 1fr));
+  }
+
+  .attract__roster {
+    overflow: hidden;
+  }
+}
+
 /* Focus shows as the outline here, so the blink stays visible. */
 .attract__start:focus-visible {
   color: var(--giz);

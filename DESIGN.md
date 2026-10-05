@@ -99,6 +99,9 @@ components:
 
 **Creative North Star: "Fliperama de Luta Brasileiro"**
 
+The cast includes original fauna and a kid-friendly Brazilian folklore showcase:
+Saci, Curupira, Iara, Cuca, Boto, Mula and Caipora join Boitatá and Mapinguari.
+
 Tabuada Rock is a full-bleed 3D arcade fight wrapped in a DOM control layer. The visual system turns arithmetic into spectacle: products become damage numbers, correct answers become hits, and every teaching or record screen borrows the same fighting-game grammar of skewed plates, ink outlines, heavy announcer type, segmented meters, and tactile button states.
 
 The shipped world is deliberately loud but legible. Cobalt player energy, brasa rival pressure, arcade gold reward, and ink structure repeat through both the HUD and the 3D scene. The DOM never floats bare over the stage when it carries important text; it sits on paper or ink plates so the learning loop stays readable over daylight Brazilian arenas.
