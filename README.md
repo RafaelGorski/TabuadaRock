@@ -10,13 +10,14 @@ Works in any recent desktop browser. Phones and tablets are supported with an on
 
 1. **Create a fighter** (*Novo lutador*). Pick a name and a partner creature. Each player gets a profile, so parent and child can compete on the same computer.
 2. **Climb the Torre da Tabuada**, the tables of 2 → 10. The *Desafio Final* at the top mixes every table.
-3. **Each table is one match:**
+3. **Choose the arena** on a map of Brazil: ten places from Monte Roraima to Iguaçu, each with its own 3D scenery. The level and its guardian stay the same; only the stage changes.
+4. **Each opponent is one round:**
    - **Treino:** orbs build the table row by row, teaching it before any test. No clock.
-   - **Round 1:** the facts in order.
-   - **Round 2:** the facts shuffled.
-   - **Round final:** shuffled facts plus review from earlier tables, with a gentle clock.
-4. **Answer** by typing the number and pressing **Enter**, or with the on-screen keypad. **DICA** shows a hint.
-5. **Stars** depend on mistakes in the whole fight: at most 1 mistake earns ★★★, at most 4 earns ★★, and any win earns ★. Beating a table recruits its guardian to your team.
+   - **Duelo:** ten shuffled facts against each guardian. Winning unlocks the next opponent.
+   - **Desafio Final:** one mixed round covering every table.
+   - A coin toss opens the round. Win it and your fighter lands a free hit; lose it and the first correct answer is worth double. Each fighter has two normal attacks of different elements plus a super move, so no two duels look alike.
+5. **Answer** by typing the number and pressing **Enter**, with the on-screen keypad, or out loud: **FALAR** listens in pt-BR and **OUVIR** reads the question again. **DICA** shows a hint.
+6. **Stars** depend on mistakes in the round: no mistakes earns ★★★, up to 3 earns ★★, and any win earns ★. Beating a table recruits its guardian and unlocks the next opponent.
 
 ### Records (*Recordes*)
 
@@ -56,6 +57,8 @@ Stack: Vite, TypeScript, and Three.js.
 - The creatures and stages are modeled in code, with no external 3D assets.
 - Sound effects and music are synthesized with the Web Audio API.
 - The narrator uses the browser's speech synthesis when a pt-BR voice is installed.
+- Spoken answers use the browser's speech recognition (*Opções → Responder falando*). Where it is missing, the button stays hidden and answers are typed.
+- Seven of the twenty fighters come from Brazilian folklore: Saci, Curupira, Iara, Cuca, Boto, Mula and Caipora.
 
 ### Deploy
 

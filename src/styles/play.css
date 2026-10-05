@@ -6,8 +6,9 @@
   display: grid;
   grid-template-columns: auto auto;
   grid-template-areas:
-    'eq dica'
-    'hint hint';
+    'eq tools'
+    'hint hint'
+    'voice voice';
   align-items: center;
   justify-items: center;
   width: fit-content;
@@ -153,9 +154,43 @@
   color: var(--brasa-escuro);
 }
 
-.qplate__dica {
-  grid-area: dica;
+.qplate__tools {
+  grid-area: tools;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
   margin-left: var(--s-5);
+}
+
+.qplate__mic.is-on {
+  background: var(--brasa);
+  animation: mic-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  50% {
+    filter: brightness(1.18);
+  }
+}
+
+.qplate__voice {
+  grid-area: voice;
+  max-width: 36ch;
+  margin-top: var(--s-2);
+  font-size: var(--step--1);
+  font-weight: 750;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--cobalto);
+}
+
+.qplate__voice[data-kind='erro'] {
+  color: var(--brasa-escuro);
+}
+
+.qplate__voice[data-kind='ok'] {
+  color: var(--tinta);
 }
 
 /* ---- On-screen keypad: on by choice, always on touch screens ---- */
@@ -168,8 +203,9 @@
 html.has-keypad .qplate {
   grid-template-columns: auto auto auto;
   grid-template-areas:
-    'eq dica keypad'
-    'hint hint keypad';
+    'eq tools keypad'
+    'hint hint keypad'
+    'voice voice keypad';
 }
 
 html.has-keypad .keypad {

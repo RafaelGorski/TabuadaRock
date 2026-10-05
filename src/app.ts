@@ -1,6 +1,7 @@
 import { Music } from './audio/music';
 import { Sound } from './audio/synth';
 import { Voice } from './audio/voice';
+import { Listener } from './audio/listen';
 import { DEFAULT_SETTINGS, type Profile, type Settings, type Store } from './data/store';
 import { Moves } from './engine/moves';
 import { OrbWall } from './engine/orbs';
@@ -25,7 +26,7 @@ export type ScreenFactory<K extends RouteName> = (app: App, params: Routes[K]) =
 export type ScreenTable = { [K in RouteName]: ScreenFactory<K> };
 type Args<K extends RouteName> = undefined extends Routes[K] ? [params?: Routes[K]] : [params: Routes[K]];
 
-const NEEDS_PROFILE = new Set<RouteName>(['torre', 'vs', 'treino', 'luta', 'resultado', 'campeao']);
+const NEEDS_PROFILE = new Set<RouteName>(['torre', 'mapa', 'vs', 'treino', 'luta', 'resultado', 'campeao']);
 
 export class App {
   readonly world: World;
@@ -33,6 +34,7 @@ export class App {
   readonly sound = new Sound();
   readonly music = new Music(this.sound);
   readonly voice = new Voice(this.sound);
+  readonly listener = new Listener();
   readonly orbs = new OrbWall();
   settings: Settings = { ...DEFAULT_SETTINGS };
   profile: Profile | null = null;
@@ -83,6 +85,7 @@ export class App {
       }
       this.world.reset();
       this.voice.stop();
+      this.listener.stop();
       this.world.setSafeArea({ top: 0.08, bottom: 0.72 });
       const make = this.screens[name] as ScreenFactory<K>;
       const screen = make(this, args[0] as Routes[K]);
@@ -112,8 +115,15 @@ export class App {
     this.sound.setMusic(s.music);
     this.voice.enabled = s.narrator;
     if (!s.narrator) this.voice.stop();
+    this.listener.enabled = s.speak;
+    if (!s.speak) this.listener.stop();
     this.world.shake = s.shake && !this.reduced;
     document.documentElement.classList.toggle('has-keypad', this.showKeypad);
+  }
+
+  /** Speech answering is on when asked for and the browser can listen. */
+  get canSpeak(): boolean {
+    return this.settings.speak && this.listener.available;
   }
 
   /** The on-screen keypad shows when asked for, and always on touch screens. */
@@ -189,6 +199,7 @@ export class App {
     if (document.hidden) {
       void this.store.flush();
       this.voice.stop();
+      this.listener.stop();
       this.current?.hidden?.();
       void this.sound.ctx?.suspend().catch(() => {});
     } else if (this.sound.ctx) {

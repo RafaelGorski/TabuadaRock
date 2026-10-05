@@ -19,13 +19,13 @@ export const torre: ScreenFactory<'torre'> = (app, params) => {
   const rungs = LEVELS.map((l, i) => {
     const lp = progressOf(p, l.id);
     const open = levelUnlocked(p, i);
-    const state = !open ? 'locked' : lp.resume ? 'resume' : lp.cleared ? 'cleared' : 'open';
+    const state = !open ? 'locked' : lp.cleared ? 'cleared' : 'open';
     const b = h(
       'button',
       { type: 'button', class: 'rung', 'data-state': state, 'data-final': l.table === null ? '' : undefined, tabindex: -1 },
       h('span', { class: 'rung__n', 'aria-hidden': 'true' }, l.table === null ? icon('crown') : String(l.table)),
       h('span', { class: 'rung__name' }, l.name),
-      h('span', { class: 'rung__state' }, !open ? [icon('lock'), h('span', { class: 'sr-only' }, 'bloqueada')] : lp.resume ? `Round ${lp.resume.nextRound}` : stars(lp.stars)),
+      h('span', { class: 'rung__state' }, !open ? [icon('lock'), h('span', { class: 'sr-only' }, 'bloqueada')] : stars(lp.stars)),
     );
     b.addEventListener('click', () => {
       select(l, true);
@@ -87,8 +87,7 @@ export const torre: ScreenFactory<'torre'> = (app, params) => {
       if (on) b.setAttribute('aria-current', 'step');
       else b.removeAttribute('aria-current');
     });
-    const lp = progressOf(p, l.id);
-    partner = lp.resume?.partner && p.team.includes(lp.resume.partner) ? lp.resume.partner : bestPartner(p.team, l.rival, p.starter);
+    partner = bestPartner(p.team, l.rival, p.starter);
     if (changed || !panel.childElementCount) render();
     stage(now);
   }
@@ -135,35 +134,26 @@ export const torre: ScreenFactory<'torre'> = (app, params) => {
     const best = lp.best ? h('p', { class: 'info__best' }, stars(lp.stars), h('span', null, `Melhor: ${fmt(lp.best)} pontos`)) : null;
     const trick =
       sel.table === null
-        ? h('div', { class: 'trick' }, h('h3', { class: 'trick__title' }, 'Todas as tabuadas'), h('p', null, 'Round 1 mistura do 2 ao 5, round 2 do 6 ao 10, e o último round mistura tudo com relógio e sem dicas.'))
+        ? h('div', { class: 'trick' }, h('h3', { class: 'trick__title' }, 'Todas as tabuadas'), h('p', null, 'Um duelo com contas de todas as tabuadas misturadas.'))
         : h('div', { class: 'trick' }, h('h3', { class: 'trick__title' }, `Truque: ${sel.trickName}`), h('p', null, sel.trick));
     const btn = (label: string, ic: Parameters<typeof icon>[0], cls: string, run: () => void) => h('button', { type: 'button', class: `btn ${cls}`, onclick: run }, icon(ic), label);
     const fight = () => {
       app.sound.ok();
-      app.go('vs', { level: sel.id, partner });
+      app.go('mapa', { level: sel.id, partner });
     };
     const train = () => {
       app.sound.ok();
       app.go('treino', { level: sel.id, partner });
     };
     const actions: HTMLElement[] = [];
-    if (lp.resume) {
-      const r = lp.resume;
-      actions.push(
-        btn(`Continuar no round ${r.nextRound}`, 'play', 'btn--primary btn--big', () => {
-          app.sound.ok();
-          app.go('luta', { level: sel.id, partner: r.partner, resume: true });
-        }),
-        btn('Começar do zero', 'restart', '', fight),
-      );
-    } else if (sel.table !== null && !lp.trained) {
+    if (sel.table !== null && !lp.trained) {
       actions.push(btn('Treinar', 'bulb', 'btn--primary btn--big', train), btn('Lutar sem treinar', 'swords', '', fight));
     } else {
       actions.push(btn(lp.cleared ? 'Lutar de novo' : 'Lutar', 'swords', 'btn--primary btn--big', fight));
       if (sel.table !== null) actions.push(btn('Treinar de novo', 'bulb', '', train));
     }
-    const hint = sel.table !== null && !lp.trained && !lp.resume ? h('p', { class: 'info__hint' }, 'Comece pelo treino: as bolinhas mostram a tabuada inteira, uma fileira por vez.') : null;
-    fill(panel, head, best, trick, lp.resume ? null : partnerPicker(), hint, h('div', { class: 'actions' }, actions));
+    const hint = sel.table !== null && !lp.trained ? h('p', { class: 'info__hint' }, 'Comece pelo treino: as bolinhas mostram a tabuada inteira, uma fileira por vez.') : null;
+    fill(panel, head, best, trick, partnerPicker(), hint, h('div', { class: 'actions' }, actions));
   }
 
   function leave() {

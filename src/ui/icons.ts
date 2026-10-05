@@ -32,6 +32,8 @@ const PATHS = {
   list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/>',
   enter: '<path d="M19 5v7H6M10 8l-4 4 4 4"/>',
   swords: '<path d="M4 4l10 10M14 14l-2 3 3-1M20 4L10 14M10 14l2 3-3-1M4 20l3-3M20 20l-3-3"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7"/>',
+  map: '<path d="M9 4L3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5zM9 4v14M15 6.5v14"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

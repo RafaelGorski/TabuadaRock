@@ -243,6 +243,11 @@ export function buildRound(level: LevelDef, round: RoundNumber, stats: FactStats
   );
 }
 
+/** One complete duel per opponent: shuffled table facts, or the full mixed final challenge. */
+export function buildDuel(level: LevelDef, stats: FactStats, rng: Rng): Question[] {
+  return buildRound(level, level.table === null ? 3 : 2, stats, rng);
+}
+
 /** Seconds per question, or null when there is no clock. */
 export function roundTimer(level: LevelDef, round: RoundNumber): number | null {
   if (round < 3) return null;
@@ -255,8 +260,8 @@ export function roundTimer(level: LevelDef, round: RoundNumber): number | null {
 export const hintsAllowed = (round: RoundNumber): boolean => round < 3;
 
 export function starsFor(mistakes: number): 1 | 2 | 3 {
-  if (mistakes <= 1) return 3;
-  if (mistakes <= 4) return 2;
+  if (mistakes === 0) return 3;
+  if (mistakes <= 3) return 2;
   return 1;
 }
 

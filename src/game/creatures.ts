@@ -13,7 +13,14 @@ export type CreatureId =
   | 'polvorosa'
   | 'quatrovao'
   | 'micoleao'
-  | 'mapinguari';
+  | 'mapinguari'
+  | 'saci'
+  | 'curupira'
+  | 'iara'
+  | 'cuca'
+  | 'boto'
+  | 'mula'
+  | 'caipora';
 
 export interface CreatureDef {
   id: CreatureId;
@@ -142,6 +149,69 @@ export const CREATURES: Record<CreatureId, CreatureDef> = {
     blurb: 'Gigante das lendas da floresta, de um olho só e boca na barriga. O último desafio da torre.',
     move: 'Pisão de Pedra',
     superMove: 'Terremoto Ancestral',
+  },
+  saci: {
+    id: 'saci',
+    name: 'Saci',
+    type: 'vento',
+    animal: 'menino travesso da lenda',
+    blurb: 'Saci de uma perna só, gorro vermelho e sorriso maroto. Gira num redemoinho e prega peças do bem.',
+    move: 'Rodopio do Gorro',
+    superMove: 'Redemoinho Travesso',
+  },
+  curupira: {
+    id: 'curupira',
+    name: 'Curupira',
+    type: 'planta',
+    animal: 'guardião da floresta',
+    blurb: 'Curupira de cabelos vermelhos e pés virados para trás. Protege as árvores com muita energia e alegria.',
+    move: 'Passo ao Contrário',
+    superMove: 'Trilha da Floresta',
+  },
+  iara: {
+    id: 'iara',
+    name: 'Iara',
+    type: 'agua',
+    animal: 'sereia do rio',
+    blurb: 'Iara sereia dos rios, com cauda brilhante e voz afinada. Faz ondas musicais que refrescam a arena.',
+    move: 'Onda Cantante',
+    superMove: 'Canto das Águas',
+  },
+  cuca: {
+    id: 'cuca',
+    name: 'Cuca',
+    type: 'planta',
+    animal: 'jacaré brincalhona da lenda',
+    blurb: 'Cuca jacaré brincalhona, cheia de escamas coloridas e ideias divertidas. Seu feitiço faz cócegas na floresta.',
+    move: 'Cócega de Ervas',
+    superMove: 'Caldeirão de Folhas',
+  },
+  boto: {
+    id: 'boto',
+    name: 'Boto',
+    type: 'agua',
+    animal: 'boto-cor-de-rosa',
+    blurb: 'Boto-cor-de-rosa sorridente, de chapéu de palha e saltos elegantes. Nada ligeiro e dança nas ondas.',
+    move: 'Salto Rosa',
+    superMove: 'Onda do Boto',
+  },
+  mula: {
+    id: 'mula',
+    name: 'Mula',
+    type: 'fogo',
+    animal: 'mula-sem-cabeça da lenda',
+    blurb: 'Mula-sem-cabeça que trocou a cabeça por chamas coloridas. É veloz, engraçada e ilumina a noite.',
+    move: 'Coice de Fagulhas',
+    superMove: 'Galope Flamejante',
+  },
+  caipora: {
+    id: 'caipora',
+    name: 'Caipora',
+    type: 'planta',
+    animal: 'guardião da mata',
+    blurb: 'Caipora de cabelos de fogo, cajado na mão e coração enorme. Cuida dos bichos e confunde quem maltrata a mata.',
+    move: 'Cajado de Cipó',
+    superMove: 'Festa da Mata',
   },
 };
 

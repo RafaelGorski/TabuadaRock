@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   answerOf,
+  buildDuel,
   buildRound,
   display,
   explain,
@@ -113,6 +114,18 @@ describe('rounds', () => {
     }
   });
 
+  it('builds one complete duel per opponent', () => {
+    for (const l of tables) {
+      const qs = buildDuel(l, {}, makeRng(1));
+      expect(qs).toHaveLength(10);
+      expect(qs.map((q) => q.b).sort((x, y) => x - y)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      expect(qs.every((q) => q.a === l.table)).toBe(true);
+    }
+    const final = buildDuel(levelById('final'), {}, makeRng(1));
+    expect(final).toHaveLength(14);
+    expect(new Set(final.map((q) => q.a)).size).toBeGreaterThan(5);
+  });
+
   it('spreads a repeated fact apart', () => {
     const q = (b: number) => makeQuestion(3, b);
     const out = spreadRepeats([q(4), q(4), q(5), q(6)]);
@@ -126,7 +139,7 @@ describe('rounds', () => {
 
 describe('pontos, estrelas e domínio', () => {
   it('stars follow the mistakes', () => {
-    expect([0, 1, 2, 4, 5, 9].map(starsFor)).toEqual([3, 3, 2, 2, 1, 1]);
+    expect([0, 1, 2, 3, 4, 9].map(starsFor)).toEqual([3, 2, 2, 2, 1, 1]);
   });
 
   it('fast, combo and reverse answers earn more; hinted answers earn less', () => {

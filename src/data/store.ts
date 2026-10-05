@@ -3,16 +3,6 @@ import type { FactStat, FactStats } from '../game/facts';
 import { LEVELS } from '../game/levels';
 import { LS_PREFIX, MapBackend, openBackend, type Backend, type BackendKind } from './db';
 
-export interface MatchProgress {
-  nextRound: 2 | 3;
-  score: number;
-  mistakes: number;
-  correct: number;
-  ms: number;
-  maxCombo: number;
-  partner: CreatureId;
-}
-
 export interface LevelProgress {
   trained: boolean;
   cleared: boolean;
@@ -21,8 +11,6 @@ export interface LevelProgress {
   /** Best score of a full winning match. */
   best: number;
   plays: number;
-  /** A match that was left between rounds. */
-  resume?: MatchProgress;
 }
 
 export interface Totals {
@@ -68,6 +56,8 @@ export interface Settings {
   music: boolean;
   narrator: boolean;
   readAloud: boolean;
+  /** Answer the times table out loud instead of typing. */
+  speak: boolean;
   shake: boolean;
   keypad: boolean;
   volume: number;
@@ -77,7 +67,8 @@ export const DEFAULT_SETTINGS: Settings = {
   sfx: true,
   music: true,
   narrator: true,
-  readAloud: false,
+  readAloud: true,
+  speak: false,
   shake: true,
   keypad: false,
   volume: 0.8,
@@ -121,17 +112,6 @@ function normalizeLevel(v: unknown): LevelProgress {
     best: Math.max(0, num(l.best)),
     plays: Math.max(0, num(l.plays)),
   };
-  if (isObj(l.resume) && (l.resume.nextRound === 2 || l.resume.nextRound === 3) && isCreature(l.resume.partner)) {
-    out.resume = {
-      nextRound: l.resume.nextRound,
-      score: num(l.resume.score),
-      mistakes: num(l.resume.mistakes),
-      correct: num(l.resume.correct),
-      ms: num(l.resume.ms),
-      maxCombo: num(l.resume.maxCombo),
-      partner: l.resume.partner,
-    };
-  }
   return out;
 }
 
@@ -214,6 +194,7 @@ export function normalizeSettings(v: unknown): Settings {
     music: bool(s.music, DEFAULT_SETTINGS.music),
     narrator: bool(s.narrator, DEFAULT_SETTINGS.narrator),
     readAloud: bool(s.readAloud, DEFAULT_SETTINGS.readAloud),
+    speak: bool(s.speak, DEFAULT_SETTINGS.speak),
     shake: bool(s.shake, DEFAULT_SETTINGS.shake),
     keypad: bool(s.keypad, DEFAULT_SETTINGS.keypad),
     volume: Math.max(0, Math.min(1, num(s.volume, DEFAULT_SETTINGS.volume))),
@@ -248,7 +229,6 @@ export function mergeProfiles(a: Profile, b: Profile): Profile {
       stars: Math.max(x.stars, y.stars),
       best: Math.max(x.best, y.best),
       plays: Math.max(x.plays, y.plays),
-      ...(a.updatedAt >= b.updatedAt ? (x.resume ? { resume: x.resume } : {}) : y.resume ? { resume: y.resume } : {}),
     };
   }
   const facts: FactStats = { ...a.facts };

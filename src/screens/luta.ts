@@ -1,5 +1,6 @@
 import type { ScreenFactory } from '../app';
 import type { Actor } from '../engine/world';
+import { COUNTER_BONUS, pickAttack, superOf, tossOpener } from '../game/attacks';
 import { CREATURES } from '../game/creatures';
 import * as F from '../game/facts';
 import { levelById } from '../game/levels';
@@ -9,14 +10,11 @@ import { FightHud } from '../ui/hud';
 import { Announcer, pop } from '../ui/parts';
 import { QuestionPlate } from '../ui/question';
 import { guard, isWide, progressOf } from './kit';
-import { betweenBody, explainBody, lostBody, pauseBox } from './luta-panels';
+import { explainBody, lostBody, pauseBox } from './luta-panels';
 
-type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'between' | 'lost' | 'over';
+type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'lost' | 'over';
 
-const SUB_TABLE = ['As contas em ordem, do 1 ao 10', 'As mesmas contas, fora de ordem', 'Contra o relógio e sem dicas'];
-const SUB_FINAL = ['Tabuadas do 2 ao 5', 'Tabuadas do 6 ao 10', 'Tudo misturado, contra o relógio'];
-
-export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => {
+export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   const alive = guard(app);
   const L = levelById(level);
   const p = app.profile!;
@@ -25,7 +23,6 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   const rv = CREATURES[L.rival];
   const maxLives = MISTAKES_ALLOWED[matchup(me.type, rv.type)];
   const song = L.table === null ? 'chefe' : 'luta';
-  const subs = L.table === null ? SUB_FINAL : SUB_TABLE;
   const rng = F.makeRng();
   const tw = app.world.tw;
   const hud = new FightHud(app, partner, L.rival);
@@ -35,14 +32,11 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   const side = h('section', { class: 'fightpanel plate plate--paper', hidden: true, 'aria-labelledby': 'fp-title' });
   let pauseEl: HTMLElement | null = null;
 
-  const saved = resume ? lp.resume : undefined;
-  let round: F.RoundNumber = saved?.nextRound ?? 1;
-  let won = round - 1;
-  let score = saved?.score ?? 0;
-  let mistakes = saved?.mistakes ?? 0;
-  let correct = saved?.correct ?? 0;
-  let ms = saved?.ms ?? 0;
-  let maxCombo = saved?.maxCombo ?? 0;
+  let score = 0;
+  let mistakes = 0;
+  let correct = 0;
+  let ms = 0;
+  let maxCombo = 0;
   let perfect = 0;
   let snap = { score, mistakes, correct, ms, maxCombo, perfect };
 
@@ -60,6 +54,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   let lastSec = -1;
   let hinted = false;
   let retype = 0;
+  /** Points multiplier earned when the rival opens the round. */
+  let counter = 1;
+  /** How many hits the rival has landed, so its super move comes on a beat. */
+  let rivalHits = 0;
   let phase: Phase = 'intro';
   let paused = false;
   let anim: Promise<unknown> = Promise.resolve();
@@ -102,32 +100,65 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     layout();
   }
 
-  async function startRound(r: F.RoundNumber) {
-    round = r;
+  async function startRound() {
     phase = 'intro';
     snap = { score, mistakes, correct, ms, maxCombo, perfect };
-    queue = F.buildRound(L, r, p.facts, rng).map((q) => ({ q, damage: true }));
+    queue = F.buildDuel(L, p.facts, rng).map((q) => ({ q, damage: true }));
     pos = 0;
     hp = hpMax = queue.length;
     lives = maxLives;
     combo = charge = roundMistakes = 0;
+    counter = 1;
+    rivalHits = 0;
     missed = [];
     hideSide();
     plate.hide();
-    hud.setRound(r, won);
+    hud.setRound(1, 0, 'Duelo');
     hud.setHp(hp, hpMax);
     hud.setLives(lives, maxLives);
     hud.setScore(score);
     hud.setCombo(0);
     hud.setSuper(0);
-    hud.setClock(F.roundTimer(L, r));
+    hud.setClock(null);
     hero.reset();
     foe.reset();
-    await ann.show(r === 3 ? 'Round final' : `Round ${r}`, { sub: subs[r - 1], hold: 1.3 });
+    await ann.show('Duelo único', { sub: L.table === null ? 'Todas as tabuadas misturadas' : 'Uma rodada para vencer este oponente', hold: 1.3 });
+    if (!alive()) return;
+    await opener();
     if (!alive()) return;
     app.sound.go();
     await ann.show('Lute!', { tone: 'brasa', hold: 0.45 });
     if (alive()) ask();
+  }
+
+  /**
+   * Coin toss for who swings first. Winning gives the hero a free hit; losing only
+   * costs a scare, and the first answer after it is worth double.
+   */
+  async function opener() {
+    const first = tossOpener(rng);
+    const name = first === 'heroi' ? me.name : rv.name;
+    await ann.show(`${name} começa!`, { sub: first === 'heroi' ? 'Golpe de surpresa' : 'Revide valendo o dobro', tone: first === 'heroi' ? 'menta' : 'brasa', hold: 0.9 });
+    if (!alive()) return;
+    const atk = pickAttack(first === 'heroi' ? partner : L.rival, rng);
+    if (first === 'heroi') {
+      if (hp > 1) hp--;
+      // The opener replaces one question's damage, but the child still answers every fact.
+      queue[0].damage = false;
+      const left = hp;
+      await app.moves.strike(hero, foe, atk.type, {
+        onHit: () => {
+          app.sound.impact(atk.type, 1);
+          pop(app, layer, foe.worldHead(), atk.name, 'pop pop--hit');
+          hud.setHp(left, hpMax);
+        },
+      });
+      announce(`${me.name} abriu com ${atk.name}.`);
+    } else {
+      counter = COUNTER_BONUS;
+      await app.moves.strike(foe, hero, atk.type, { onHit: () => app.sound.impact(atk.type, 1) });
+      announce(`${rv.name} abriu com ${atk.name}. O próximo acerto vale o dobro.`);
+    }
   }
 
   function ask() {
@@ -137,11 +168,11 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     qTime = 0;
     lastSec = -1;
     hinted = false;
-    limit = F.roundTimer(L, round);
+    limit = null;
     hud.setClock(limit);
-    plate.show(F.display(q), F.spoken(q), { hint: F.hintsAllowed(round) });
+    plate.show(F.display(q), F.spoken(q), { hint: true });
     announce(F.spoken(q));
-    if (app.settings.readAloud) void app.say(F.spoken(q));
+    if (app.settings.readAloud || app.canSpeak) void app.say(F.spoken(q));
   }
 
   plate.onSubmit = (v) => {
@@ -185,7 +216,9 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     combo++;
     maxCombo = Math.max(maxCombo, combo);
     charge++;
-    const pts = F.pointsFor(t, combo, q.reverse, hinted);
+    const pts = F.pointsFor(t, combo, q.reverse, hinted) * counter;
+    const doubled = counter > 1;
+    counter = 1;
     score += pts;
     hud.setScore(score);
     hud.setCombo(combo);
@@ -197,16 +230,17 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     const ko = hp <= 0;
     const left = hp;
     const ans = F.answerOf(q);
+    const atk = big ? superOf(partner) : pickAttack(partner, rng);
     pop(app, layer, hero.worldHead(), `+${pts}`, 'pop pop--points');
-    announce(`Certo! Mais ${pts} pontos.`);
+    announce(`Certo! ${atk.name}. Mais ${pts} pontos${doubled ? ', em dobro pelo revide' : ''}.`);
     anim = anim.then(async () => {
       if (!alive()) return;
-      if (big) void ann.show(me.superMove, { sub: 'Super golpe!', hold: 0.8, big: false });
-      await app.moves.strike(hero, foe, me.type, {
-        power: big ? 2 : 1,
+      if (big) void ann.show(atk.name, { sub: 'Super golpe!', hold: 0.8, big: false });
+      await app.moves.strike(hero, foe, atk.type, {
+        power: atk.power,
         ko,
         onHit: () => {
-          app.sound.impact(me.type, big ? 2 : 1);
+          app.sound.impact(atk.type, atk.power);
           pop(app, layer, foe.worldHead(), String(ans), 'pop pop--hit');
           hud.setHp(left, hpMax);
           if (big) hud.setSuper(0);
@@ -246,17 +280,22 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       void ann.show('Tempo!', { tone: 'brasa', hold: 0.5, big: false });
     }
     const ko = lives <= 0;
-    anim = anim.then(() =>
-      alive()
-        ? app.moves.strike(foe, hero, rv.type, {
-            ko,
-            onHit: () => {
-              app.sound.impact(rv.type, 1);
-              if (ko) app.sound.knockout();
-            },
-          })
-        : undefined,
-    );
+    rivalHits++;
+    const heavy = !ko && rivalHits % 3 === 0;
+    const atk = heavy ? superOf(L.rival) : pickAttack(L.rival, rng);
+    anim = anim.then(() => {
+      if (!alive()) return undefined;
+      if (heavy) void ann.show(atk.name, { sub: `${rv.name} revidou forte`, hold: 0.8, big: false });
+      return app.moves.strike(foe, hero, atk.type, {
+        power: atk.power,
+        ko,
+        onHit: () => {
+          app.sound.impact(atk.type, atk.power);
+          pop(app, layer, hero.worldHead(), atk.name, 'pop pop--hit');
+          if (ko) app.sound.knockout();
+        },
+      });
+    });
     if (ko) {
       void anim.then(() => {
         if (alive()) void roundLost();
@@ -272,7 +311,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     plate.hintBtn.hidden = true;
     plate.setHint(`Digite ${retype} para continuar.`, 'pedido');
     plate.focus();
-    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${e.say}. Digite ${retype} para continuar.`);
+    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${rv.name} usou ${atk.name}. ${e.say}. Digite ${retype} para continuar.`);
     void app.say(e.say);
   }
 
@@ -290,11 +329,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   }
 
   async function roundWon() {
-    phase = 'between';
+    phase = 'over';
     plate.hide();
     app.voice.stop();
-    won = round;
-    hud.setRound(round, won);
+    hud.setRound(1, 1, 'Duelo');
     void hero.cheer(tw, 2);
     await ann.show('K.O.!', { tone: 'brasa', hold: 1 });
     if (!alive()) return;
@@ -307,18 +345,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       await ann.show('Perfeito!', { sub: `Mais ${F.PERFECT_ROUND_BONUS} pontos`, tone: 'menta', hold: 0.9 });
       if (!alive()) return;
     }
-    if (round === 3) return void matchWon();
-    const next = (round + 1) as 2 | 3;
-    lp.resume = { nextRound: next, score, mistakes, correct, ms, maxCombo, partner };
-    void app.saveProfile();
-    showSide(
-      'between',
-      `Round ${round} vencido!`,
-      betweenBody({ round, score, mistakes: roundMistakes, maxCombo, perfect: clean }, `Agora: ${next === 3 ? 'round final' : `round ${next}`}. ${subs[next - 1]}.`, () => {
-        app.sound.ok();
-        void startRound(next);
-      }, quit),
-    );
+    void matchWon();
   }
 
   async function roundLost() {
@@ -334,12 +361,12 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     showSide(
       'lost',
       'Não foi dessa vez',
-      lostBody(rv.name, round, missed, {
+      lostBody(rv.name, missed, {
         retry: () => {
           app.sound.ok();
           ({ score, mistakes, correct, ms, maxCombo, perfect } = snap);
           app.music.play(song);
-          void startRound(round);
+          void startRound();
         },
         train: L.table === null ? null : () => app.go('treino', { level, partner }),
         torre: quit,
@@ -355,7 +382,6 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     lp.cleared = true;
     lp.stars = Math.max(lp.stars, stars);
     lp.best = Math.max(lp.best, score);
-    delete lp.resume;
     p.totals.wins++;
     const recruited = L.table !== null && !p.team.includes(L.rival);
     if (recruited) p.team.push(L.rival);
@@ -385,12 +411,12 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   }
 
   function pause() {
-    if (paused || phase === 'over' || phase === 'between' || phase === 'lost') return;
+    if (paused || phase === 'over' || phase === 'lost') return;
     paused = true;
     app.world.paused = true;
     app.voice.stop();
     plate.lock(true);
-    pauseEl = pauseBox(round, unpause, quit);
+    pauseEl = pauseBox(unpause, quit);
     for (const c of el.children) (c as HTMLElement).inert = true;
     el.append(pauseEl);
     app.focusStart(pauseEl);
@@ -416,22 +442,19 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     el,
     enter() {
       app.music.play(song);
-      app.world.setStage(L.stage);
+      app.world.setStage(stage ?? L.stage);
       const [a, b] = app.world.setFighters(partner, L.rival);
       hero = a;
       foe = b!;
       layout();
       app.world.frameFight(true, { yaw: 0.1, pitch: 0.08 });
       mq.addEventListener('change', layout);
-      if (!saved) {
-        delete lp.resume;
-        lp.plays++;
-        p.totals.matches++;
-        void app.saveProfile();
-      }
+      lp.plays++;
+      p.totals.matches++;
+      void app.saveProfile();
       unsub = app.world.onFrame((gdt, dt) => {
         if (paused) return;
-        if (phase !== 'between' && phase !== 'lost' && phase !== 'over') p.totals.playMs += dt * 1000;
+        if (phase !== 'lost' && phase !== 'over') p.totals.playMs += dt * 1000;
         if (phase !== 'ask') return;
         qTime += gdt;
         if (limit === null) return;
@@ -444,7 +467,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
         }
         if (rest <= 0) miss(true);
       });
-      void startRound(round);
+      void startRound();
     },
     leave() {
       unsub();
@@ -458,7 +481,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     },
     back() {
       if (paused) return unpause();
-      if (phase === 'between' || phase === 'lost') return quit();
+      if (phase === 'lost') return quit();
       pause();
     },
     hidden: pause,

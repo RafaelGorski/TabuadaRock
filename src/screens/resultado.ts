@@ -40,7 +40,7 @@ export const resultado: ScreenFactory<'resultado'> = (app, r) => {
   const actions = r.crowned
     ? [go('Ver a festa de campeão', 'crown', true, () => app.go('campeao')), go('Voltar para a torre', 'left', false, () => app.go('torre', { level: L.id }))]
     : [
-        next ? go(`Ir para a ${next.name}`, 'right', true, () => app.go('torre', { level: next.id })) : null,
+        next ? go(`Próximo oponente: ${next.name}`, 'right', true, () => app.go('mapa', { level: next.id, partner: r.partner })) : null,
         go('Jogar de novo', 'restart', !next, () => app.go('vs', { level: L.id, partner: r.partner })),
         go('Ver recordes', 'trophy', false, () => app.go('recordes', { tab: 'lutas', from: 'torre' })),
       ];
@@ -67,9 +67,9 @@ export const resultado: ScreenFactory<'resultado'> = (app, r) => {
         stat('Erros', String(r.mistakes)),
         stat('Tempo por acerto', r.correct ? fmtSec(r.ms / r.correct) : '–'),
         stat('Maior sequência', String(r.maxCombo)),
-        stat('Rounds perfeitos', String(r.perfect)),
+        stat('Round perfeito', r.perfect ? 'Sim' : 'Não'),
       ),
-      h('p', { class: 'res__tip' }, r.stars < 3 ? `Para ganhar 3 estrelas, erre no máximo 1 vez na luta toda. Desta vez foram ${r.mistakes} erros.` : 'Três estrelas! Você quase não errou nesta luta.'),
+      h('p', { class: 'res__tip' }, r.stars < 3 ? `Para ganhar 3 estrelas, complete o duelo sem errar. Desta vez foram ${r.mistakes} erros.` : 'Três estrelas! Você venceu sem nenhum erro.'),
       recruit,
       h('div', { class: 'actions' }, actions),
     ),
