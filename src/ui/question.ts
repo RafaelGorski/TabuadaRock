@@ -22,6 +22,7 @@ export class QuestionPlate {
   readonly micBtn: HTMLButtonElement;
   private eq: HTMLElement;
   private hintEl: HTMLParagraphElement;
+  private hintCountEl: HTMLSpanElement;
   private box: HTMLElement;
   private voiceEl: HTMLParagraphElement;
   private locked = false;
@@ -51,11 +52,13 @@ export class QuestionPlate {
     this.eq = h('div', { class: 'qplate__eq' });
     this.hintEl = h('p', { class: 'qplate__hint', id: hintId, hidden: true });
     this.voiceEl = h('p', { class: 'qplate__voice', role: 'status', hidden: true });
+    this.hintCountEl = h('span', { class: 'qplate__dica-count', 'aria-hidden': 'true' });
     this.hintBtn = h(
       'button',
       { type: 'button', class: 'btn btn--small qplate__dica', hidden: true, 'aria-keyshortcuts': o.hintKey === false ? undefined : 'D' },
       icon('bulb'),
       'Dica',
+      this.hintCountEl,
       o.hintKey === false ? null : h('kbd', { 'aria-hidden': 'true' }, 'D'),
     );
     this.hintBtn.addEventListener('click', () => {
@@ -105,15 +108,21 @@ export class QuestionPlate {
     return this.input.value;
   }
 
-  show(eq: Equation, label: string, o: { hint?: boolean } = {}): void {
+  show(eq: Equation, label: string, o: { hint?: boolean; hintsRemaining?: number } = {}): void {
     const n = (t: string) => h('span', { class: 'qplate__n', 'aria-hidden': 'true' }, t);
     const op = (t: string) => h('span', { class: 'qplate__op', 'aria-hidden': 'true' }, t);
     this.eq.replaceChildren(n(eq.x), op('×'), eq.y === '?' ? this.box : n(eq.y), op('='), eq.result === '?' ? this.box : n(eq.result));
     this.input.setAttribute('aria-label', label);
     this.input.value = '';
     this.label = label;
-    this.hintBtn.hidden = !o.hint;
-    this.hintBtn.disabled = false;
+    if (o.hintsRemaining === undefined) {
+      this.hintBtn.hidden = !o.hint;
+      this.hintBtn.disabled = false;
+      this.hintCountEl.hidden = true;
+    } else {
+      this.hintBtn.hidden = false;
+      this.setHintCount(o.hintsRemaining);
+    }
     this.setHint(null);
     this.setVoice(null);
     this.micBtn.hidden = !this.app.canSpeak;
@@ -178,6 +187,14 @@ export class QuestionPlate {
     this.hintEl.hidden = !text;
     this.hintEl.textContent = text ?? '';
     this.hintEl.dataset.kind = kind;
+  }
+
+  setHintCount(remaining: number): void {
+    const count = Math.max(0, remaining);
+    this.hintCountEl.hidden = false;
+    this.hintCountEl.textContent = String(count);
+    this.hintBtn.disabled = count === 0;
+    this.hintBtn.setAttribute('aria-label', count === 0 ? 'Nenhuma dica restante.' : count === 1 ? 'Usar dica. 1 dica restante.' : `Usar dica. ${count} dicas restantes.`);
   }
 
   lock(on: boolean): void {

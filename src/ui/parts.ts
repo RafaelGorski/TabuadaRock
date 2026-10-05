@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { App } from '../app';
 import { CREATURES, type CreatureId } from '../game/creatures';
+import { PRIZES } from '../game/selos';
 import { TYPES, matchup, type ElementType, type Matchup } from '../game/types';
 import type { ActorId } from '../engine/actors';
 import { announce, h } from './dom';
@@ -15,6 +16,39 @@ export function matchupChip(att: CreatureId, def: CreatureId): HTMLSpanElement {
   const m = matchup(CREATURES[att].type, CREATURES[def].type);
   const cls = m === 'vantagem' ? 'chip chip--menta' : m === 'desvantagem' ? 'chip chip--brasa' : 'chip chip--ouro';
   return h('span', { class: cls }, MATCHUP_LABEL[m]);
+}
+
+export function rewardProgress(balance: number, enabled = true): HTMLElement {
+  const goal = balance < PRIZES.small.seals ? PRIZES.small : PRIZES.large;
+  const shown = Math.min(balance, goal.seals);
+  const percent = Math.round(shown / goal.seals * 100);
+  const message = !enabled
+    ? 'Peça ao responsável para ativar a Missão Rock e começar a juntar selos.'
+    : balance >= PRIZES.large.seals
+      ? `Você já pode pedir ${PRIZES.large.label} ao responsável.`
+      : balance >= PRIZES.small.seals
+        ? `Você já pode pedir ${PRIZES.small.label}. Faltam ${PRIZES.large.seals - balance} selos para pedir ${PRIZES.large.label}.`
+        : `Faltam ${PRIZES.small.seals - balance} selos para pedir ${PRIZES.small.label} ao responsável.`;
+
+  return h(
+    'section',
+    { class: `reward-progress${enabled ? '' : ' is-disabled'}`, 'aria-label': 'Progresso da Missão Rock' },
+    h('div', { class: 'reward-progress__head' }, h('strong', null, 'MISSÃO ROCK'), h('span', null, `${balance} SELOS`)),
+    h(
+      'div',
+      {
+        class: 'reward-progress__meter',
+        role: 'progressbar',
+        'aria-label': `Progresso para pedir ${goal.label}`,
+        'aria-valuemin': 0,
+        'aria-valuenow': shown,
+        'aria-valuemax': goal.seals,
+        style: `--value:${percent}`,
+      },
+      h('span', null, `${shown} / ${goal.seals}`),
+    ),
+    h('p', null, message),
+  );
 }
 
 /** The best partner on the team against this rival. */

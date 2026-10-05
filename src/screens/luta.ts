@@ -190,7 +190,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     if (!attempted.has(F.keyOf(q)) && !hinted) { /* first response is tracked on submit */ }
     limit = null;
     hud.setClock(limit);
-    plate.show(F.display(q), F.spoken(q), { hint: F.hintAvailable(hintsUsed) });
+    plate.show(F.display(q), F.spoken(q), { hintsRemaining: F.HINTS_PER_ROUND - hintsUsed });
     announce(F.spoken(q));
     if (app.settings.readAloud || app.canSpeak) void app.say(F.spoken(q));
   }
@@ -218,6 +218,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     const text = q.reverse ? `Conte de ${q.a} em ${q.a} até chegar no ${q.a * q.b}.` : `Lembra do treino: ${F.trainingHint(q.a, q.b)}.`;
     const remaining = F.HINTS_PER_ROUND - hintsUsed;
     plate.setHint(`${text} Com dica, o acerto vale menos pontos. ${remaining ? `${remaining} ${remaining === 1 ? 'dica restante' : 'dicas restantes'}.` : 'As 3 dicas desta luta foram usadas.'}`);
+    plate.setHintCount(remaining);
     plate.hintBtn.disabled = true;
     app.sound.sparkle();
     announce(text);
@@ -468,7 +469,27 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     app.music.jingle('vitoria');
     await ann.show('Vitória!', { hold: 1.2 });
     if (!alive()) return;
-    app.go('resultado', { level: L.id, partner, score, stars, mistakes, correct, ms: Math.round(ms), maxCombo, perfect, prevBest, rank, recruited, crowned, firstClear, firstTry, seals, rewardMessage });
+    app.go('resultado', {
+      level: L.id,
+      partner,
+      score,
+      stars,
+      mistakes,
+      correct,
+      ms: Math.round(ms),
+      maxCombo,
+      perfect,
+      prevBest,
+      rank,
+      recruited,
+      crowned,
+      firstClear,
+      firstTry,
+      seals,
+      rewardMessage,
+      rewardBalance: reward.state.balance,
+      rewardsEnabled: reward.state.settings.enabled,
+    });
   }
 
   function quit() {
