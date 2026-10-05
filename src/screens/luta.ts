@@ -62,6 +62,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   let limit: number | null = null;
   let lastSec = -1;
   let hinted = false;
+  let hintsUsed = 0;
   const attempted = new Set<string>();
   const firstTryFacts = new Set<string>();
   let firstTry = 0;
@@ -124,6 +125,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     counter = 1;
     rivalHits = 0;
     missed = [];
+    hintsUsed = 0;
     attempted.clear();
     firstTryFacts.clear();
     firstTry = 0;
@@ -188,7 +190,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     if (!attempted.has(F.keyOf(q)) && !hinted) { /* first response is tracked on submit */ }
     limit = null;
     hud.setClock(limit);
-    plate.show(F.display(q), F.spoken(q), { hint: true });
+    plate.show(F.display(q), F.spoken(q), { hint: F.hintAvailable(hintsUsed) });
     announce(F.spoken(q));
     if (app.settings.readAloud || app.canSpeak) void app.say(F.spoken(q));
   }
@@ -204,16 +206,18 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     }
     if (phase !== 'ask') return;
     if (v === F.answerOf(queue[pos].q)) void hit();
-    else miss(false);
+    else miss(false, v);
   };
 
   plate.onHint = () => {
-    if (phase !== 'ask' || hinted || paused) return;
+    if (phase !== 'ask' || hinted || paused || !F.hintAvailable(hintsUsed)) return;
     hinted = true;
+    hintsUsed++;
     const q = queue[pos].q;
     F.recordHint(p.facts, q);
     const text = q.reverse ? `Conte de ${q.a} em ${q.a} até chegar no ${q.a * q.b}.` : `Lembra do treino: ${F.trainingHint(q.a, q.b)}.`;
-    plate.setHint(`${text} Com dica, o acerto vale menos pontos.`);
+    const remaining = F.HINTS_PER_ROUND - hintsUsed;
+    plate.setHint(`${text} Com dica, o acerto vale menos pontos. ${remaining ? `${remaining} ${remaining === 1 ? 'dica restante' : 'dicas restantes'}.` : 'As 3 dicas desta luta foram usadas.'}`);
     plate.hintBtn.disabled = true;
     app.sound.sparkle();
     announce(text);
@@ -289,8 +293,11 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     ask();
   }
 
-  function miss(timeout: boolean) {
+  function miss(timeout: boolean, wrongValue?: number) {
     const q = queue[pos].q;
+    const wrongSpeech = timeout || wrongValue === undefined
+      ? Promise.resolve()
+      : app.say(`Você respondeu ${wrongValue}. Esse valor está errado.`);
     attempted.add(F.keyOf(q));
     phase = 'busy';
     plate.lock(true);
@@ -343,7 +350,9 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     plate.setHint(`Digite ${retype} para continuar.`, 'pedido');
     plate.focus();
     announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${rv.name} usou ${atk.name}. ${e.say}. Digite ${retype} para continuar.`);
-    void app.say(e.say);
+    void wrongSpeech.then(() => {
+      if (alive()) return app.say(e.say);
+    });
   }
 
   async function afterExplain() {

@@ -25,6 +25,11 @@ export interface Question {
 }
 
 export type Rng = () => number;
+export const HINTS_PER_ROUND = 3;
+
+export function hintAvailable(used: number): boolean {
+  return used < HINTS_PER_ROUND;
+}
 
 export const factKey = (a: number, b: number): string => `${a}x${b}`;
 export const keyOf = (q: Question): string => factKey(q.a, q.b);

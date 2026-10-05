@@ -6,6 +6,8 @@ import {
   display,
   explain,
   explainFact,
+  HINTS_PER_ROUND,
+  hintAvailable,
   keyOf,
   makeQuestion,
   makeRng,
@@ -139,6 +141,11 @@ describe('rounds', () => {
 });
 
 describe('pontos, estrelas e domínio', () => {
+  it('allows only three hints in each round', () => {
+    expect(HINTS_PER_ROUND).toBe(3);
+    expect([0, 1, 2, 3, 4].map(hintAvailable)).toEqual([true, true, true, false, false]);
+  });
+
   it('stars follow the mistakes', () => {
     expect([0, 1, 2, 3, 4, 9].map(starsFor)).toEqual([3, 2, 2, 2, 1, 1]);
   });
