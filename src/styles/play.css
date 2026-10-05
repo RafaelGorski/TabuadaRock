@@ -162,6 +162,24 @@
   margin-left: var(--s-5);
 }
 
+.qplate__dica-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.65em;
+  height: 1.65em;
+  padding-inline: 0.35em;
+  color: var(--giz);
+  background: var(--tinta);
+  border: 2px solid currentColor;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.qplate__dica:disabled .qplate__dica-count {
+  color: var(--tinta);
+  background: var(--nevoa);
+}
+
 .qplate__mic.is-on {
   background: var(--brasa);
   animation: mic-pulse 1.1s ease-in-out infinite;

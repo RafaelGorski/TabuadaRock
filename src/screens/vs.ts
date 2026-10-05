@@ -5,7 +5,7 @@ import { spotName } from '../game/mapa';
 import { matchupText } from '../game/types';
 import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
-import { portrait, typeChip } from '../ui/parts';
+import { portrait, rewardProgress, typeChip } from '../ui/parts';
 import { guard, keys, safeAreas } from './kit';
 
 export const vs: ScreenFactory<'vs'> = (app, { level, partner, stage }) => {
@@ -27,6 +27,7 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner, stage }) => {
     h('figcaption', { class: 'vs__by' }, rv.name),
   );
   const fight = h('button', { type: 'button', class: 'btn btn--primary btn--big', 'data-autofocus': '' }, icon('swords'), 'Lutar');
+  const rewardSlot = h('div', { class: 'vs__reward', hidden: true });
   const go = () => {
     app.sound.ok();
     app.go('luta', { level, partner, stage });
@@ -53,6 +54,7 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner, stage }) => {
       { class: 'vs__go plate plate--paper' },
       h('p', { class: 'matchup', 'data-kind': m.kind }, h('b', null, m.title), ' ', m.text, ' ', h('span', { class: 'matchup__lives' }, m.lives)),
       h('p', { class: 'vs__arena' }, icon('map'), `Arena: ${spotName(stage ?? L.stage)}`),
+      rewardSlot,
       h(
         'div',
         { class: 'actions' },
@@ -111,6 +113,11 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner, stage }) => {
       app.music.play(L.table === null ? 'chefe' : 'luta');
       off = safeAreas(app, { top: 0.2, bottom: 0.66 }, { top: 0.2, bottom: 0.56 });
       app.world.setStage(stage ?? L.stage);
+      void app.store.getRewards(p.id).then((state) => {
+        if (!alive()) return;
+        rewardSlot.replaceChildren(rewardProgress(state.balance, state.settings.enabled));
+        rewardSlot.hidden = false;
+      }).catch((error: unknown) => console.error('Não foi possível carregar o progresso da Missão Rock.', error));
       void intro();
     },
     leave: () => off(),

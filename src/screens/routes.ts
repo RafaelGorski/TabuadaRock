@@ -25,6 +25,8 @@ export interface MatchResult {
   firstTry: number;
   seals: number;
   rewardMessage: string;
+  rewardBalance: number;
+  rewardsEnabled: boolean;
 }
 
 export interface Routes {
