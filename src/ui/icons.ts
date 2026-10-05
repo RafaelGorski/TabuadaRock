@@ -34,6 +34,9 @@ const PATHS = {
   swords: '<path d="M4 4l10 10M14 14l-2 3 3-1M20 4L10 14M10 14l2 3-3-1M4 20l3-3M20 20l-3-3"/>',
   mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7"/>',
   map: '<path d="M9 4L3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5zM9 4v14M15 6.5v14"/>',
+  share: '<circle cx="18" cy="5" r="2.8"/><circle cx="6" cy="12" r="2.8"/><circle cx="18" cy="19" r="2.8"/><path d="M8.5 10.6l7-4.2M8.5 13.4l7 4.2"/>',
+  whatsapp: '<path d="M3.4 20.6l1.4-4A8.3 8.3 0 1 1 7.8 19z"/><path d="M9.2 8.8c.5 2.8 3.2 5.5 6 6"/>',
+  instagram: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1.2" fill="currentColor" stroke="none"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

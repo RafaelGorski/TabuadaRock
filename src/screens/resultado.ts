@@ -4,6 +4,7 @@ import { levelById } from '../game/levels';
 import { fmt, fmtSec, h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { portrait, rewardProgress } from '../ui/parts';
+import { shareBar } from '../ui/share';
 import { guard, lineup, nextLevel, safeAreas } from './kit';
 import { btn } from './luta-panels';
 
@@ -30,6 +31,9 @@ export const resultado: ScreenFactory<'resultado'> = (app, r) => {
         h('figcaption', null, h('p', { class: 'recruit__title' }, `${rival.name} entrou para a sua equipe!`), h('blockquote', { class: 'recruit__quote' }, h('p', null, L.join))),
       )
     : null;
+
+  const starText = r.stars === 1 ? '1 estrela' : `${r.stars} estrelas`;
+  const share = shareBar(app, `Venci ${L.name} no Tabuada Rock com ${fmt(r.score)} pontos e ${starText}! Joga você também:`);
 
   const go = (label: string, ic: Parameters<typeof icon>[0], primary: boolean, run: () => void) =>
     btn(label, ic, primary ? 'btn--primary btn--big' : '', () => {
@@ -73,6 +77,7 @@ export const resultado: ScreenFactory<'resultado'> = (app, r) => {
       ),
       h('p', { class: 'res__tip' }, r.stars < 3 ? `Para ganhar 3 estrelas, complete o duelo sem errar. Desta vez foram ${r.mistakes} erros.` : 'Três estrelas! Você venceu sem nenhum erro.'),
       recruit,
+      share,
       h('div', { class: 'actions' }, actions),
     ),
   );
