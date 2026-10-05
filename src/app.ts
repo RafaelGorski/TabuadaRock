@@ -26,7 +26,7 @@ export type ScreenFactory<K extends RouteName> = (app: App, params: Routes[K]) =
 export type ScreenTable = { [K in RouteName]: ScreenFactory<K> };
 type Args<K extends RouteName> = undefined extends Routes[K] ? [params?: Routes[K]] : [params: Routes[K]];
 
-const NEEDS_PROFILE = new Set<RouteName>(['torre', 'mapa', 'vs', 'treino', 'luta', 'resultado', 'campeao']);
+const NEEDS_PROFILE = new Set<RouteName>(['torre', 'mapa', 'vs', 'treino', 'luta', 'resultado', 'campeao', 'missao']);
 
 export class App {
   readonly world: World;

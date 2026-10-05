@@ -22,6 +22,9 @@ export interface MatchResult {
   /** This match made the profile champion for the first time. */
   crowned: boolean;
   firstClear: boolean;
+  firstTry: number;
+  seals: number;
+  rewardMessage: string;
 }
 
 export interface Routes {
@@ -38,6 +41,7 @@ export interface Routes {
   campeao: undefined;
   recordes: { tab?: RecordTab; from?: keyof Routes } | undefined;
   opcoes: { from?: keyof Routes } | undefined;
+  missao: undefined;
 }
 
 export type RecordTab = 'ranking' | 'lutas' | 'duelo' | 'dominio';

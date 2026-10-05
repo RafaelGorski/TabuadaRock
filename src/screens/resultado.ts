@@ -58,6 +58,7 @@ export const resultado: ScreenFactory<'resultado'> = (app, r) => {
         h('div', { class: 'bigstars', role: 'img', 'aria-label': `${r.stars} de 3 estrelas` }, starEls),
         h('p', { class: 'res__score' }, h('b', null, fmt(r.score)), ' pontos'),
       ),
+        h('p', { class: 'res__reward plate plate--ink' }, `${r.firstTry} DE 10 NO PRIMEIRO GOLPE · ${r.seals ? `+${r.seals} SELOS` : r.rewardMessage}`),
       badge ? h('p', { class: 'chip chip--ouro res__badge' }, icon('star'), badge) : null,
       r.rank ? h('p', { class: 'res__rank' }, icon('trophy'), `${r.rank}º lugar entre as 10 melhores lutas da casa.`) : null,
       h(
