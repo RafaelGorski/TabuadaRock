@@ -4,6 +4,7 @@ export interface FactStat {
   seen: number;
   correct: number;
   wrong: number;
+  hints: number;
   streak: number;
   bestMs: number;
   lastMs: number;
@@ -166,7 +167,7 @@ export function spreadRepeats(qs: Question[]): Question[] {
 /** Higher means the kid needs this fact more. */
 export function weakness(s?: FactStat): number {
   if (!s || s.seen === 0) return 2;
-  let w = 1 + s.wrong * 1.2 - Math.min(s.streak, 4) * 0.35;
+  let w = 1 + s.wrong * 1.2 + (s.hints ?? 0) * 0.45 - Math.min(s.streak, 4) * 0.35;
   if (s.lastMs > 8000) w += 0.6;
   return Math.max(0.25, w);
 }
@@ -212,7 +213,7 @@ export function buildRound(level: LevelDef, round: RoundNumber, stats: FactStats
   if (level.table !== null) {
     const n = level.table;
     if (round === 1) return range(1, 10).map((b) => makeQuestion(n, b));
-    if (round === 2) return spreadRepeats(shuffle(range(1, 10).map((b) => makeQuestion(n, b)), rng));
+    if (round === 2) return spreadRepeats(pickWeighted(range(1, 10).map((b) => makeQuestion(n, b)), w, 10, rng));
     const core = range(2, 9).map((b) => makeQuestion(n, b));
     if (n >= 4) {
       for (const i of shuffle(range(0, core.length - 1), rng).slice(0, 3)) core[i] = { ...core[i], reverse: true };
@@ -276,7 +277,7 @@ export function pointsFor(ms: number, combo: number, reverse: boolean, hinted: b
 
 export function record(stats: FactStats, q: Question, correct: boolean, ms: number): FactStat {
   const k = keyOf(q);
-  const s = stats[k] ?? (stats[k] = { seen: 0, correct: 0, wrong: 0, streak: 0, bestMs: 0, lastMs: 0 });
+  const s = stats[k] ?? (stats[k] = { seen: 0, correct: 0, wrong: 0, hints: 0, streak: 0, bestMs: 0, lastMs: 0 });
   s.seen++;
   s.lastMs = Math.round(ms);
   if (correct) {
@@ -287,6 +288,14 @@ export function record(stats: FactStats, q: Question, correct: boolean, ms: numb
     s.wrong++;
     s.streak = 0;
   }
+  return s;
+}
+
+/** Records a reminder without treating the fact as an error or lowering its streak. */
+export function recordHint(stats: FactStats, q: Question): FactStat {
+  const k = keyOf(q);
+  const s = stats[k] ?? (stats[k] = { seen: 0, correct: 0, wrong: 0, hints: 0, streak: 0, bestMs: 0, lastMs: 0 });
+  s.hints++;
   return s;
 }
 

@@ -5,6 +5,7 @@ import { h } from '../ui/dom';
 import { guard, safeAreas } from './kit';
 
 const explanation = 'Você ganha Selos de Domínio quando mostra que aprendeu uma tabuada e consegue lembrar dela de novo depois de alguns dias. Treinar ajuda, mas repetir a mesma luta muitas vezes não dá mais selos. Errar não tira nenhum selo: a conta volta para você tentar e aprender. Não existe sequência obrigatória, e faltar um dia não faz você perder nada. Com 120 selos você pode pedir ao responsável o pacote de 800 V-Bucks; com 285, pode pedir o de 2.400. É só um pedido: o jogo não dá nem promete V-Bucks. A compra só acontece se o responsável aprovar.';
+const PARENT_PIN = '676767';
 const money = (cents: number) => `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
 const date = (at: number) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(at);
 
@@ -134,16 +135,14 @@ export const missao: ScreenFactory<'missao'> = (app) => {
 
   function setup() {
     if (!window.confirm('Os Selos apenas permitem um pedido. Qualquer compra e entrega acontecem fora do TabuadaRock e dependem do responsável. Deseja ativar?')) return;
-    const pin = window.prompt('Crie um PIN do responsável com 4 dígitos:')?.trim() ?? '';
-    if (!/^\d{4}$/.test(pin)) return app.toast('Use quatro números para criar o PIN.', 'erro');
-    state.settings = { ...state.settings, enabled: true, acknowledged: true, pin };
+    state.settings = { ...state.settings, enabled: true, acknowledged: true, pin: PARENT_PIN };
     parent = true;
     void save();
   }
 
   function enterParent() {
     const pin = window.prompt('Digite o PIN do responsável:')?.trim();
-    if (pin !== state.settings.pin) return app.toast('PIN incorreto.', 'erro');
+    if (pin !== PARENT_PIN) return app.toast('PIN incorreto.', 'erro');
     parent = true;
     render();
   }
@@ -152,7 +151,7 @@ export const missao: ScreenFactory<'missao'> = (app) => {
     const target = PRIZES[prize];
     if (!window.confirm(`Confirmar aprovação de ${target.label} por ${money(target.priceCents)}? A entrega acontece fora do jogo e pode depender de disponibilidade.`)) return;
     const pin = window.prompt('Digite novamente o PIN do responsável para aprovar:')?.trim();
-    if (pin !== state.settings.pin) return app.toast('PIN incorreto. Nada foi alterado.', 'erro');
+    if (pin !== PARENT_PIN) return app.toast('PIN incorreto. Nada foi alterado.', 'erro');
     try {
       void save(approvePrize(state, prize, Date.now()));
     } catch {

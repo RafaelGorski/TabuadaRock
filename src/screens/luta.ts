@@ -211,6 +211,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     if (phase !== 'ask' || hinted || paused) return;
     hinted = true;
     const q = queue[pos].q;
+    F.recordHint(p.facts, q);
     const text = q.reverse ? `Conte de ${q.a} em ${q.a} até chegar no ${q.a * q.b}.` : `Lembra do treino: ${F.trainingHint(q.a, q.b)}.`;
     plate.setHint(`${text} Com dica, o acerto vale menos pontos.`);
     plate.hintBtn.disabled = true;

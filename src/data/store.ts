@@ -179,6 +179,7 @@ function normalizeFacts(v: unknown): FactStats {
       seen: num(s.seen),
       correct: num(s.correct),
       wrong: num(s.wrong),
+      hints: num(s.hints),
       streak: num(s.streak),
       bestMs: num(s.bestMs),
       lastMs: num(s.lastMs),
