@@ -11,7 +11,6 @@ import { Announcer, pop } from '../ui/parts';
 import { QuestionPlate } from '../ui/question';
 import { guard, isWide, progressOf } from './kit';
 import { explainBody, lostBody, pauseBox } from './luta-panels';
-import { capAllows, canFinal, classifyReview, eligiblePayout, nextDue, type SessionKind } from '../game/selos';
 
 type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'lost' | 'over';
 
@@ -64,7 +63,9 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   let lastSec = -1;
   let hinted = false;
   const attempted = new Set<string>();
+  const firstTryFacts = new Set<string>();
   let firstTry = 0;
+  let rewardEventId = '';
   let retype = 0;
   /** Points multiplier earned when the rival opens the round. */
   let counter = 1;
@@ -123,6 +124,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     counter = 1;
     rivalHits = 0;
     missed = [];
+    attempted.clear();
+    firstTryFacts.clear();
+    firstTry = 0;
+    rewardEventId = globalThis.crypto?.randomUUID?.() ?? `${p.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     hideSide();
     plate.hide();
     hud.setRound(1, 0, 'Duelo');
@@ -219,7 +224,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     const key = F.keyOf(q);
     if (!attempted.has(key)) {
       attempted.add(key);
-      if (!hinted) firstTry++;
+      if (!hinted) {
+        firstTry++;
+        firstTryFacts.add(key);
+      }
     }
     const t = qTime * 1000;
     phase = 'busy';
@@ -401,35 +409,32 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     const stars = F.starsFor(mistakes);
     const prevBest = lp.best;
     const firstClear = !lp.cleared;
-    const eventId = `${p.id}:${L.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-    const rewardState = await app.store.getRewards(p.id);
     const trained = L.table !== null && lp.trained;
-    const schedule = L.table === null ? undefined : rewardState.reviews[String(L.table)];
-    let kind: SessionKind = L.table === null ? 'final' : firstClear && trained ? 'novo' : schedule && schedule.dueAt && Date.now() >= schedule.dueAt ? classifyReview(schedule, Date.now()) : 'manutenção';
-    if (L.table !== null && (!firstClear && (!schedule || !schedule.dueAt || Date.now() < schedule.dueAt))) kind = 'manutenção';
     const allCleared = LEVELS.filter((level) => level.table !== null).every((level) => p.levels[level.id]?.cleared);
-    const eligible = rewardState.settings.enabled && (L.table === null ? canFinal(rewardState.finalLastAt, Date.now(), allCleared) : (trained && (firstClear || !!schedule && !!schedule.dueAt && Date.now() >= schedule.dueAt)));
-    const candidate = eligible ? eligiblePayout(kind, firstTry, true) : 0;
-    const seals = eligible && capAllows(rewardState.ledger, Date.now(), candidate) ? candidate : 0;
-    if (seals > 0) {
-      const at = Date.now();
-      await app.store.creditRewards(p.id, { eventId, profileId: p.id, table: L.table ?? 'final', kind, firstTry, seals, at, dueAt: L.table === null ? undefined : nextDue(kind, at) });
-      if (L.table !== null) {
-        const fresh = await app.store.getRewards(p.id);
-        const r = fresh.reviews[String(L.table)] ?? { credited: 0, mastered: false };
-        r.firstClearAt ??= at;
-        r.credited++;
-        r.dueAt = nextDue(kind, at);
-        r.mastered = r.mastered || r.credited >= 3 && firstTry >= 8;
-        fresh.reviews[String(L.table)] = r;
-        await app.store.saveRewards(p.id, fresh);
-      } else {
-        const fresh = await app.store.getRewards(p.id);
-        fresh.finalLastAt = Date.now();
-        await app.store.saveRewards(p.id, fresh);
-      }
-    }
-    const rewardMessage = !rewardState.settings.enabled ? 'Recompensas desativadas pelo responsável.' : seals ? `+${seals} SELOS` : eligible ? 'Esta sessão não atingiu os critérios de selos.' : 'Treine a tabuada e volte quando a revisão estiver disponível.';
+    const reward = await app.store.applyRewardSession(p.id, {
+      eventId: rewardEventId,
+      profileId: p.id,
+      table: L.table ?? 'final',
+      trained,
+      firstClear,
+      allTablesCleared: allCleared,
+      won: true,
+      firstTry,
+      correctFacts: [...firstTryFacts],
+      at: Date.now(),
+    });
+    const seals = reward.entry?.seals ?? 0;
+    const rewardMessage = reward.reason === 'disabled'
+      ? 'Recompensas desativadas pelo responsável.'
+      : reward.reason === 'paused'
+        ? 'As recompensas estão pausadas pelo responsável. Seu treino continua valendo.'
+      : reward.reason === 'cap'
+        ? 'O limite tranquilo de hoje ou da semana já foi alcançado. Continue treinando sem pressa.'
+        : reward.reason === 'credited'
+          ? firstTry < (reward.entry?.kind === 'novo' ? 8 : 9)
+            ? 'Você concluiu a sessão; a precisão ainda não rendeu selos.'
+            : 'Sessão registrada.'
+          : 'Esta luta foi prática. Volte quando a revisão estiver disponível.';
     lp.cleared = true;
     lp.stars = Math.max(lp.stars, stars);
     lp.best = Math.max(lp.best, score);

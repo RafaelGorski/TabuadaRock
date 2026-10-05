@@ -2,7 +2,16 @@ import { ALL_CREATURES, STARTERS, type CreatureId } from '../game/creatures';
 import type { FactStat, FactStats } from '../game/facts';
 import { LEVELS } from '../game/levels';
 import { LS_PREFIX, MapBackend, openBackend, type Backend, type BackendKind } from './db';
-import { DEFAULT_BUDGET_CENTS, type RewardLedgerEntry, type ReviewSchedule } from '../game/selos';
+import {
+  DEFAULT_BUDGET_CENTS,
+  awardSession,
+  removeLedgerEntry,
+  type Approval,
+  type AwardResult,
+  type RewardLedgerEntry,
+  type RewardState,
+  type SessionAward,
+} from '../game/selos';
 
 export interface LevelProgress {
   trained: boolean;
@@ -64,46 +73,45 @@ export interface Settings {
   volume: number;
 }
 
-export interface RewardSettings {
-  enabled: boolean;
-  pin: string;
-  budgetCents: number;
-  paused: boolean;
-  rollingSpendCents: number;
-  approvals: number[];
-}
-
-export interface RewardState {
-  balance: number;
-  ledger: RewardLedgerEntry[];
-  reviews: Record<string, ReviewSchedule>;
-  settings: RewardSettings;
-  pending: { prize: 'small' | 'large'; requestedAt: number } | null;
-  finalLastAt?: number;
-}
-
-export const DEFAULT_REWARD_SETTINGS: RewardSettings = {
-  enabled: false, pin: '', budgetCents: DEFAULT_BUDGET_CENTS, paused: false, rollingSpendCents: 0, approvals: [],
-};
-
 export function normalizeRewardState(v: unknown): RewardState {
   const x = isObj(v) ? v : {};
   const s = isObj(x.settings) ? x.settings : {};
-  const reviews: Record<string, ReviewSchedule> = {};
+  const reviews: RewardState['reviews'] = {};
   if (isObj(x.reviews)) for (const [k, raw] of Object.entries(x.reviews)) {
     const r = isObj(raw) ? raw : {};
-    reviews[k] = { firstClearAt: num(r.firstClearAt) || undefined, dueAt: num(r.dueAt) || undefined, credited: Math.max(0, num(r.credited)), mastered: bool(r.mastered) };
+    const factCredits: Record<string, number> = {};
+    if (isObj(r.factCredits)) for (const [fact, count] of Object.entries(r.factCredits)) factCredits[fact] = Math.max(0, num(count));
+    reviews[k] = {
+      firstClearAt: num(r.firstClearAt) || undefined,
+      dueAt: num(r.dueAt) || undefined,
+      credited: Math.max(0, num(r.credited)),
+      factCredits,
+      mastered: bool(r.mastered),
+    };
   }
-  const ledger = Array.isArray(x.ledger) ? x.ledger.filter(isObj).map((e) => ({ ...e, at: num(e.at), seals: Math.max(0, num(e.seals)) })) as RewardLedgerEntry[] : [];
+  const ledger = Array.isArray(x.ledger) ? x.ledger.filter(isObj).map((e) => ({
+    ...e,
+    at: num(e.at),
+    firstTry: Math.max(0, num(e.firstTry)),
+    seals: Math.max(0, num(e.seals)),
+    correctFacts: Array.isArray(e.correctFacts) ? e.correctFacts.filter((fact): fact is string => typeof fact === 'string') : [],
+  })) as RewardLedgerEntry[] : [];
+  const approvals: Approval[] = Array.isArray(s.approvals) ? s.approvals.flatMap((raw) => {
+    if (typeof raw === 'number') return [{ prize: 'large' as const, seals: 285, priceCents: DEFAULT_BUDGET_CENTS, at: raw }];
+    if (!isObj(raw) || (raw.prize !== 'small' && raw.prize !== 'large')) return [];
+    return [{ prize: raw.prize, seals: Math.max(0, num(raw.seals)), priceCents: Math.max(0, num(raw.priceCents)), at: num(raw.at) }];
+  }) : [];
   return {
     balance: Math.max(0, num(x.balance)),
     ledger,
     reviews,
     settings: {
-      enabled: bool(s.enabled), pin: typeof s.pin === 'string' ? s.pin : '',
+      enabled: bool(s.enabled),
+      acknowledged: bool(s.acknowledged, bool(s.enabled)),
+      pin: typeof s.pin === 'string' ? s.pin : '',
       budgetCents: Math.max(0, num(s.budgetCents, DEFAULT_BUDGET_CENTS)),
-      paused: bool(s.paused), rollingSpendCents: Math.max(0, num(s.rollingSpendCents)),
-      approvals: Array.isArray(s.approvals) ? s.approvals.filter((n): n is number => typeof n === 'number') : [],
+      paused: bool(s.paused),
+      approvals,
     },
     pending: isObj(x.pending) && (x.pending.prize === 'small' || x.pending.prize === 'large') ? { prize: x.pending.prize, requestedAt: num(x.pending.requestedAt) } : null,
     finalLastAt: num(x.finalLastAt) || undefined,
@@ -338,6 +346,7 @@ const MIRROR_KEY = LS_PREFIX + 'espelho';
 
 export class Store {
   private mirrorTimer: ReturnType<typeof setTimeout> | undefined;
+  private rewardWrites: Promise<void> = Promise.resolve();
 
   constructor(
     private be: Backend,
@@ -493,6 +502,23 @@ export class Store {
     if (state.ledger.some((e) => e.eventId === entry.eventId)) return state;
     state.ledger.push(entry);
     state.balance += entry.seals;
+    await this.saveRewards(profileId, state);
+    return state;
+  }
+
+  async applyRewardSession(profileId: string, session: SessionAward): Promise<AwardResult> {
+    let result!: AwardResult;
+    this.rewardWrites = this.rewardWrites.then(async () => {
+      const state = await this.getRewards(profileId);
+      result = awardSession(state, session);
+      if (result.reason === 'credited') await this.saveRewards(profileId, result.state);
+    });
+    await this.rewardWrites;
+    return result;
+  }
+
+  async deleteRewardEntry(profileId: string, eventId: string): Promise<RewardState> {
+    const state = removeLedgerEntry(await this.getRewards(profileId), eventId);
     await this.saveRewards(profileId, state);
     return state;
   }

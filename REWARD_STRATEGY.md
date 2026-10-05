@@ -10,4 +10,6 @@ Os **Selos de Domínio** são uma recompensa doméstica opcional, ativada por um
 - Não há sequência diária, perda por faltar, aleatoriedade, jackpot, multiplicador, compra ou promessa de V-Bucks. Isso evita mecânicas de razão variável e aversão à perda.
 - O responsável aprova e entrega qualquer prêmio fora do aplicativo. O PIN é uma barreira de convivência local, não é apresentado como segurança forte.
 
-O ledger local recebe um `eventId` por sessão e é idempotente, preservando histórico e domínio quando uma solicitação é adiada, negada ou aprovada. A criança pode pedir quando alcança 120 ou 285 selos; apenas o responsável decide se e quando cumprir o combinado.
+O ledger local recebe um `eventId` por sessão e é idempotente. Sessões elegíveis ficam registradas mesmo quando a precisão rende zero selo; cada entrada guarda os fatos acertados no primeiro golpe, permitindo calcular domínio somente quando pelo menos oito fatos recebem crédito em três sessões separadas. A agenda é reconstruída se o responsável excluir uma entrada suspeita.
+
+A criança pode pedir quando alcança 120 ou 285 selos; apenas o responsável decide se e quando cumprir o combinado. Adiar ou recusar não gasta selos. Aprovar exige o PIN novamente, respeita um orçamento móvel de 90 dias e um intervalo mínimo de 30 dias, e subtrai exatamente o limiar solicitado sem alterar domínio, ledger ou agenda de revisões.
