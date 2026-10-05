@@ -47,7 +47,6 @@ export class Voice {
     const request = ++this.request;
     if (o.interrupt !== false) {
       speechSynthesis.cancel();
-      this.sound.duck(false);
     }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = this.voice?.lang ?? 'pt-BR';
@@ -66,15 +65,23 @@ export class Voice {
       };
       u.onend = done;
       u.onerror = done;
-      speechSynthesis.speak(u);
+      try {
+        speechSynthesis.speak(u);
+      } catch (err) {
+        console.warn('Narrador indisponível', err);
+        done();
+        return;
+      }
       window.setTimeout(done, Math.min(14000, 1800 + text.length * 95));
     });
   }
 
   stop(): void {
-    if (!this.available) return;
     this.request++;
-    speechSynthesis.cancel();
-    this.sound.duck(false);
+    try {
+      if (this.available) speechSynthesis.cancel();
+    } finally {
+      this.sound.duck(false);
+    }
   }
 }
