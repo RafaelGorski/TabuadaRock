@@ -70,7 +70,7 @@ export class Sound {
     duck.connect(master);
     const sfx = ctx.createGain();
     sfx.gain.value = this.sfxOn ? 1 : 0;
-    sfx.connect(master);
+    sfx.connect(duck);
     const music = ctx.createGain();
     music.gain.value = this.musicOn ? 0.5 : 0;
     music.connect(duck);
@@ -112,7 +112,7 @@ export class Sound {
     this.buses.music?.gain.setTargetAtTime(on ? 0.5 : 0, this.now, 0.08);
   }
 
-  /** Lowers the music while the narrator talks. */
+  /** Lowers all game audio while the narrator talks. */
   duck(on: boolean): void {
     this.duckNode?.gain.setTargetAtTime(on ? 0.35 : 1, this.now, 0.1);
   }

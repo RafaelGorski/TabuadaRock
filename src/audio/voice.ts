@@ -14,6 +14,7 @@ export class Voice {
   enabled = true;
   private voice: SpeechSynthesisVoice | null = null;
   private loaded = false;
+  private request = 0;
 
   constructor(private sound: Sound) {
     if (!this.available) return;
@@ -43,7 +44,10 @@ export class Voice {
 
   say(text: string, o: SayOpts = {}): Promise<void> {
     if (!this.enabled || !this.available || !this.speaksPortuguese || !text.trim()) return Promise.resolve();
-    if (o.interrupt !== false) speechSynthesis.cancel();
+    const request = ++this.request;
+    if (o.interrupt !== false) {
+      speechSynthesis.cancel();
+    }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = this.voice?.lang ?? 'pt-BR';
     if (this.voice) u.voice = this.voice;
@@ -56,19 +60,28 @@ export class Voice {
       const done = () => {
         if (settled) return;
         settled = true;
-        if (!speechSynthesis.speaking) this.sound.duck(false);
+        if (request === this.request) this.sound.duck(false);
         resolve();
       };
       u.onend = done;
       u.onerror = done;
-      speechSynthesis.speak(u);
+      try {
+        speechSynthesis.speak(u);
+      } catch (err) {
+        console.warn('Narrador indisponível', err);
+        done();
+        return;
+      }
       window.setTimeout(done, Math.min(14000, 1800 + text.length * 95));
     });
   }
 
   stop(): void {
-    if (!this.available) return;
-    speechSynthesis.cancel();
-    this.sound.duck(false);
+    this.request++;
+    try {
+      if (this.available) speechSynthesis.cancel();
+    } finally {
+      this.sound.duck(false);
+    }
   }
 }
