@@ -132,7 +132,7 @@ describe('Store', () => {
     const p = await store.createProfile('Davi', 'capibolha');
     const old = JSON.parse(JSON.stringify(await store.exportData()));
     p.levels.t2 = { trained: true, cleared: true, stars: 2, best: 4000, plays: 1 };
-    p.facts['2x7'] = { seen: 5, correct: 5, wrong: 0, streak: 5, bestMs: 1500, lastMs: 1800 };
+    p.facts['2x7'] = { seen: 5, correct: 5, wrong: 0, hints: 0, streak: 5, bestMs: 1500, lastMs: 1800 };
     await store.saveProfile(p);
     old.profiles[0].levels.t3 = { trained: true, cleared: false, stars: 0, best: 0, plays: 0 };
     await store.importData(old);

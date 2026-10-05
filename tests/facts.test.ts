@@ -6,12 +6,15 @@ import {
   display,
   explain,
   explainFact,
+  HINTS_PER_ROUND,
+  hintAvailable,
   keyOf,
   makeQuestion,
   makeRng,
   mastery,
   pointsFor,
   record,
+  recordHint,
   requeue,
   spreadRepeats,
   starsFor,
@@ -82,7 +85,7 @@ describe('rounds', () => {
   it('round 3 keeps the core facts, adds review, and brings back the weakest fact', () => {
     for (const l of tables) {
       const n = l.table!;
-      const stats: FactStats = { [`${n}x7`]: { seen: 3, correct: 1, wrong: 2, streak: 0, bestMs: 4000, lastMs: 9000 } };
+      const stats: FactStats = { [`${n}x7`]: { seen: 3, correct: 1, wrong: 2, hints: 0, streak: 0, bestMs: 4000, lastMs: 9000 } };
       for (let seed = 1; seed <= 20; seed++) {
         const qs = buildRound(l, 3, stats, makeRng(seed));
         const own = qs.filter((q) => q.a === n);
@@ -138,6 +141,11 @@ describe('rounds', () => {
 });
 
 describe('pontos, estrelas e domínio', () => {
+  it('allows only three hints in each round', () => {
+    expect(HINTS_PER_ROUND).toBe(3);
+    expect([0, 1, 2, 3, 4].map(hintAvailable)).toEqual([true, true, true, false, false]);
+  });
+
   it('stars follow the mistakes', () => {
     expect([0, 1, 2, 3, 4, 9].map(starsFor)).toEqual([3, 2, 2, 2, 1, 1]);
   });
@@ -163,6 +171,15 @@ describe('pontos, estrelas e domínio', () => {
     expect(stats[keyOf(q)].bestMs).toBe(3000);
     record(stats, q, false, 7000);
     expect(mastery(stats[keyOf(q)])).toBe(2);
+  });
+
+  it('counts hints as reminders without adding a penalty', () => {
+    const stats: FactStats = {};
+    const q = makeQuestion(2, 7);
+    recordHint(stats, q);
+    expect(stats[keyOf(q)].wrong).toBe(0);
+    expect(stats[keyOf(q)].hints).toBe(1);
+    expect(stats[keyOf(q)].streak).toBe(0);
   });
 
   it('a missed question comes back once, and only one copy deals damage', () => {
