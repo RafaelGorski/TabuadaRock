@@ -47,6 +47,7 @@ export const torre: ScreenFactory<'torre'> = (app, params) => {
       backButton('Lutadores', () => leave()),
       whoami(app),
       h('span', { class: 'topbar__gap' }),
+      h('button', { type: 'button', class: 'btn btn--small', onclick: () => app.go('missao') }, 'MISSÃO ROCK'),
       h('button', { type: 'button', class: 'btn btn--small', onclick: () => app.go('recordes', { from: 'torre' }) }, icon('trophy'), 'Recordes'),
       h('button', { type: 'button', class: 'btn btn--small btn--icon', 'aria-label': 'Opções', onclick: () => app.go('opcoes', { from: 'torre' }) }, icon('sliders')),
     ),

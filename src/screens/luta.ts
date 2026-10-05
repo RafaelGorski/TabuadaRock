@@ -3,7 +3,7 @@ import type { Actor } from '../engine/world';
 import { COUNTER_BONUS, pickAttack, superOf, tossOpener } from '../game/attacks';
 import { CREATURES } from '../game/creatures';
 import * as F from '../game/facts';
-import { levelById } from '../game/levels';
+import { LEVELS, levelById } from '../game/levels';
 import { MISTAKES_ALLOWED, matchup } from '../game/types';
 import { announce, fill, h, type Child } from '../ui/dom';
 import { FightHud } from '../ui/hud';
@@ -62,6 +62,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   let limit: number | null = null;
   let lastSec = -1;
   let hinted = false;
+  const attempted = new Set<string>();
+  const firstTryFacts = new Set<string>();
+  let firstTry = 0;
+  let rewardEventId = '';
   let retype = 0;
   /** Points multiplier earned when the rival opens the round. */
   let counter = 1;
@@ -120,6 +124,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     counter = 1;
     rivalHits = 0;
     missed = [];
+    attempted.clear();
+    firstTryFacts.clear();
+    firstTry = 0;
+    rewardEventId = globalThis.crypto?.randomUUID?.() ?? `${p.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     hideSide();
     plate.hide();
     hud.setRound(1, 0, 'Duelo');
@@ -177,6 +185,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     qTime = 0;
     lastSec = -1;
     hinted = false;
+    if (!attempted.has(F.keyOf(q)) && !hinted) { /* first response is tracked on submit */ }
     limit = null;
     hud.setClock(limit);
     plate.show(F.display(q), F.spoken(q), { hint: true });
@@ -212,6 +221,14 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
   async function hit() {
     const slot = queue[pos];
     const q = slot.q;
+    const key = F.keyOf(q);
+    if (!attempted.has(key)) {
+      attempted.add(key);
+      if (!hinted) {
+        firstTry++;
+        firstTryFacts.add(key);
+      }
+    }
     const t = qTime * 1000;
     phase = 'busy';
     plate.lock(true);
@@ -273,6 +290,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
 
   function miss(timeout: boolean) {
     const q = queue[pos].q;
+    attempted.add(F.keyOf(q));
     phase = 'busy';
     plate.lock(true);
     plate.flash('erro');
@@ -391,6 +409,32 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     const stars = F.starsFor(mistakes);
     const prevBest = lp.best;
     const firstClear = !lp.cleared;
+    const trained = L.table !== null && lp.trained;
+    const allCleared = LEVELS.filter((level) => level.table !== null).every((level) => p.levels[level.id]?.cleared);
+    const reward = await app.store.applyRewardSession(p.id, {
+      eventId: rewardEventId,
+      profileId: p.id,
+      table: L.table ?? 'final',
+      trained,
+      firstClear,
+      allTablesCleared: allCleared,
+      won: true,
+      firstTry,
+      correctFacts: [...firstTryFacts],
+      at: Date.now(),
+    });
+    const seals = reward.entry?.seals ?? 0;
+    const rewardMessage = reward.reason === 'disabled'
+      ? 'Recompensas desativadas pelo responsável.'
+      : reward.reason === 'paused'
+        ? 'As recompensas estão pausadas pelo responsável. Seu treino continua valendo.'
+      : reward.reason === 'cap'
+        ? 'O limite tranquilo de hoje ou da semana já foi alcançado. Continue treinando sem pressa.'
+        : reward.reason === 'credited'
+          ? firstTry < (reward.entry?.kind === 'novo' ? 8 : 9)
+            ? 'Você concluiu a sessão; a precisão ainda não rendeu selos.'
+            : 'Sessão registrada.'
+          : 'Esta luta foi prática. Volte quando a revisão estiver disponível.';
     lp.cleared = true;
     lp.stars = Math.max(lp.stars, stars);
     lp.best = Math.max(lp.best, score);
@@ -414,7 +458,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, stage }) => {
     app.music.jingle('vitoria');
     await ann.show('Vitória!', { hold: 1.2 });
     if (!alive()) return;
-    app.go('resultado', { level: L.id, partner, score, stars, mistakes, correct, ms: Math.round(ms), maxCombo, perfect, prevBest, rank, recruited, crowned, firstClear });
+    app.go('resultado', { level: L.id, partner, score, stars, mistakes, correct, ms: Math.round(ms), maxCombo, perfect, prevBest, rank, recruited, crowned, firstClear, firstTry, seals, rewardMessage });
   }
 
   function quit() {

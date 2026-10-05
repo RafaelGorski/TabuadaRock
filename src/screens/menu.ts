@@ -11,7 +11,9 @@ export const menu: ScreenFactory<'menu'> = (app) => {
   const play = h('button', { type: 'button', class: 'btn btn--primary btn--big btn--wide', 'data-autofocus': '' }, icon('swords'), 'Jogar');
   const recs = h('button', { type: 'button', class: 'btn btn--big btn--wide' }, icon('trophy'), 'Recordes');
   const opts = h('button', { type: 'button', class: 'btn btn--big btn--wide' }, icon('sliders'), 'Opções');
-  const items = [play, recs, opts];
+  const mission = h('button', { type: 'button', class: 'btn btn--big btn--wide' }, 'MISSÃO ROCK');
+  const items = [play, mission, recs, opts];
+  mission.addEventListener('click', () => { app.sound.ok(); app.go('missao'); });
 
   play.addEventListener('click', async () => {
     app.sound.ok();
