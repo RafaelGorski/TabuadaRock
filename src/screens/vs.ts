@@ -1,13 +1,14 @@
 import type { ScreenFactory } from '../app';
 import { CREATURES } from '../game/creatures';
 import { levelById } from '../game/levels';
+import { spotName } from '../game/mapa';
 import { matchupText } from '../game/types';
 import { h } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { portrait, typeChip } from '../ui/parts';
 import { guard, keys, safeAreas } from './kit';
 
-export const vs: ScreenFactory<'vs'> = (app, { level, partner }) => {
+export const vs: ScreenFactory<'vs'> = (app, { level, partner, stage }) => {
   const alive = guard(app);
   const L = levelById(level);
   const p = app.profile!;
@@ -28,7 +29,7 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner }) => {
   const fight = h('button', { type: 'button', class: 'btn btn--primary btn--big', 'data-autofocus': '' }, icon('swords'), 'Lutar');
   const go = () => {
     app.sound.ok();
-    app.go('luta', { level, partner });
+    app.go('luta', { level, partner, stage });
   };
   fight.addEventListener('click', () => {
     if (!done) return finish();
@@ -51,14 +52,15 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner }) => {
       'div',
       { class: 'vs__go plate plate--paper' },
       h('p', { class: 'matchup', 'data-kind': m.kind }, h('b', null, m.title), ' ', m.text, ' ', h('span', { class: 'matchup__lives' }, m.lives)),
+      h('p', { class: 'vs__arena' }, icon('map'), `Arena: ${spotName(stage ?? L.stage)}`),
       h(
         'div',
         { class: 'actions' },
         fight,
-        h('button', { type: 'button', class: 'btn', onclick: () => leave() }, icon('left'), 'Trocar de parceiro'),
+        h('button', { type: 'button', class: 'btn', onclick: () => leave() }, icon('map'), 'Trocar de arena'),
       ),
     ),
-    keys(['Enter', 'lutar'], ['Esc', 'voltar para a torre']),
+    keys(['Enter', 'lutar'], ['Esc', 'trocar de arena']),
   );
 
   function finish() {
@@ -72,7 +74,7 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner }) => {
 
   function leave() {
     app.sound.back();
-    app.go('torre', { level });
+    app.go('mapa', { level, partner });
   }
 
   async function intro() {
@@ -108,7 +110,7 @@ export const vs: ScreenFactory<'vs'> = (app, { level, partner }) => {
     enter() {
       app.music.play(L.table === null ? 'chefe' : 'luta');
       off = safeAreas(app, { top: 0.2, bottom: 0.66 }, { top: 0.2, bottom: 0.56 });
-      app.world.setStage(L.stage);
+      app.world.setStage(stage ?? L.stage);
       void intro();
     },
     leave: () => off(),

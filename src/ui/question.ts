@@ -18,12 +18,19 @@ export class QuestionPlate {
   readonly el: HTMLFormElement;
   readonly input: HTMLInputElement;
   readonly hintBtn: HTMLButtonElement;
+  readonly sayBtn: HTMLButtonElement;
+  readonly micBtn: HTMLButtonElement;
   private eq: HTMLElement;
   private hintEl: HTMLParagraphElement;
   private box: HTMLElement;
+  private voiceEl: HTMLParagraphElement;
   private locked = false;
+  private label = '';
+  private armed = false;
   onSubmit: (value: number) => void = () => {};
   onHint: () => void = () => {};
+  /** Asked to read the question out loud again. Defaults to the narrator. */
+  onSay: (text: string) => void = (text) => void this.app.say(text);
 
   constructor(
     private app: App,
@@ -43,6 +50,7 @@ export class QuestionPlate {
     this.box = h('span', { class: 'qplate__box' }, this.input);
     this.eq = h('div', { class: 'qplate__eq' });
     this.hintEl = h('p', { class: 'qplate__hint', id: hintId, hidden: true });
+    this.voiceEl = h('p', { class: 'qplate__voice', role: 'status', hidden: true });
     this.hintBtn = h(
       'button',
       { type: 'button', class: 'btn btn--small qplate__dica', hidden: true, 'aria-keyshortcuts': o.hintKey === false ? undefined : 'D' },
@@ -54,11 +62,20 @@ export class QuestionPlate {
       this.onHint();
       this.focus();
     });
+    this.sayBtn = h('button', { type: 'button', class: 'btn btn--small qplate__ouvir', 'aria-label': 'Ouvir a conta de novo' }, icon('sound'), 'Ouvir');
+    this.sayBtn.addEventListener('click', () => {
+      if (!this.label) return;
+      this.app.sound.ok();
+      this.onSay(this.label);
+      this.focus();
+    });
+    this.micBtn = h('button', { type: 'button', class: 'btn btn--small qplate__mic', 'aria-pressed': 'false', 'aria-label': 'Responder falando' }, icon('mic'), 'Falar');
+    this.micBtn.addEventListener('click', () => this.toggleMic());
     this.el = h(
       'form',
       { class: 'qplate', novalidate: true, 'data-state': 'idle', hidden: true },
-      h('div', { class: 'qplate__main' }, this.eq, this.hintEl),
-      h('div', { class: 'qplate__side' }, this.hintBtn, this.keypad()),
+      h('div', { class: 'qplate__main' }, this.eq, this.hintEl, this.voiceEl),
+      h('div', { class: 'qplate__side' }, h('div', { class: 'qplate__tools' }, this.sayBtn, this.micBtn, this.hintBtn), this.keypad()),
     );
     this.el.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -94,17 +111,67 @@ export class QuestionPlate {
     this.eq.replaceChildren(n(eq.x), op('×'), eq.y === '?' ? this.box : n(eq.y), op('='), eq.result === '?' ? this.box : n(eq.result));
     this.input.setAttribute('aria-label', label);
     this.input.value = '';
+    this.label = label;
     this.hintBtn.hidden = !o.hint;
     this.hintBtn.disabled = false;
     this.setHint(null);
+    this.setVoice(null);
+    this.micBtn.hidden = !this.app.canSpeak;
     this.el.dataset.state = 'idle';
     this.el.hidden = false;
     this.lock(false);
     this.focus();
+    // Once a child has answered by voice, keep the microphone ready for the next one.
+    if (this.armed && this.app.canSpeak) setTimeout(() => this.toggleMic(), 600);
   }
 
   hide(): void {
+    this.stopMic();
     this.el.hidden = true;
+  }
+
+  /** Short line under the equation for what the microphone is doing. */
+  setVoice(text: string | null, kind: 'ouvindo' | 'erro' | 'ok' = 'ouvindo'): void {
+    this.voiceEl.hidden = !text;
+    this.voiceEl.textContent = text ?? '';
+    this.voiceEl.dataset.kind = kind;
+  }
+
+  /** Starts or stops listening for a spoken answer. */
+  toggleMic(): void {
+    if (this.app.listener.listening) return this.stopMic();
+    if (this.locked || this.el.hidden || !this.app.canSpeak) return;
+    const L = this.app.listener;
+    L.onState = (s) => {
+      const on = s !== 'off';
+      this.micBtn.setAttribute('aria-pressed', String(on));
+      this.micBtn.classList.toggle('is-on', on);
+      if (s === 'ouvindo') this.setVoice('Estou ouvindo… fale o número.');
+      else if (s === 'pensando') this.setVoice('Entendendo…');
+    };
+    L.onNumber = (n) => {
+      this.armed = true;
+      this.input.value = String(n).slice(0, 3);
+      this.setVoice(`Ouvi ${n}.`, 'ok');
+      this.app.sound.key();
+      this.submit();
+    };
+    L.onFail = (why) => {
+      if (why !== 'sem-numero') this.armed = false;
+      this.app.sound.denied();
+      this.setVoice(
+        why === 'sem-permissao' ? 'O navegador não deixou usar o microfone. Responda digitando.' : why === 'sem-numero' ? 'Não entendi o número. Fale de novo ou digite.' : 'O microfone não funcionou aqui. Responda digitando.',
+        'erro',
+      );
+    };
+    this.app.voice.stop();
+    L.start();
+  }
+
+  stopMic(): void {
+    if (!this.app.listener.listening) return;
+    this.app.listener.stop();
+    this.setVoice(null);
   }
 
   setHint(text: string | null, kind: 'dica' | 'pedido' = 'dica'): void {
@@ -116,6 +183,8 @@ export class QuestionPlate {
   lock(on: boolean): void {
     this.locked = on;
     this.input.readOnly = on;
+    this.micBtn.disabled = on;
+    if (on) this.stopMic();
     this.el.classList.toggle('is-locked', on);
   }
 

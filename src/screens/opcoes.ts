@@ -53,6 +53,9 @@ export const opcoes: ScreenFactory<'opcoes'> = (app, params) => {
     : !app.voice.speaksPortuguese
       ? ' Não achamos uma voz em português neste aparelho, então o narrador fica calado.'
       : '';
+  const micNote = app.listener.available
+    ? 'A criança fala o resultado e o jogo responde por ela. Precisa dar permissão de microfone ao navegador.'
+    : 'Este navegador não entende fala, então a resposta continua sendo digitada.';
 
   const vol = h('input', { type: 'range', id: 'opt-volume', min: 0, max: 100, step: 5, value: String(Math.round(app.settings.volume * 100)), 'aria-describedby': 'opt-volume-out' });
   const volOut = h('output', { id: 'opt-volume-out', for: 'opt-volume', class: 'range__out' }, `${vol.value}%`);
@@ -205,6 +208,7 @@ export const opcoes: ScreenFactory<'opcoes'> = (app, params) => {
                 if (on) void app.say('Narrador ligado.');
               }),
               flag('readAloud', 'Ler cada conta em voz alta', 'O narrador lê as perguntas da luta. Precisa do narrador ligado.'),
+              flag('speak', 'Responder falando', micNote),
               h('li', { class: 'setting setting--range' }, h('label', { for: 'opt-volume', class: 'field__label' }, 'Volume geral'), h('span', { class: 'range' }, vol, volOut)),
             ),
           ),
@@ -248,6 +252,8 @@ export const opcoes: ScreenFactory<'opcoes'> = (app, params) => {
       app.music.play('menu');
       const r = readAloud();
       if (r) r.disabled = !app.settings.narrator;
+      const sp = switches.get('speak');
+      if (sp) sp.disabled = !app.listener.available;
       switches.get('sfx')?.setAttribute('data-autofocus', '');
       fill(persistLine, icon('shield'), 'Verificando a proteção dos dados…');
       fill(backupLine, icon('download'), 'Verificando o último backup…');

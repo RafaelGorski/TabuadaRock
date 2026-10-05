@@ -109,7 +109,7 @@ export const treino: ScreenFactory<'treino'> = (app, { level, partner }) => {
     step.textContent = `Fileira ${b} de 10`;
     plate.show({ x: String(n), y: String(b), result: '?' }, `${n} vezes ${b}`);
     plate.setHint(guide(b));
-    if (app.settings.readAloud) void app.say(`${n} vezes ${b}`);
+    if (app.settings.readAloud || app.canSpeak) void app.say(`${n} vezes ${b}`);
   }
 
   plate.onSubmit = (v) => {

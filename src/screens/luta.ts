@@ -1,5 +1,6 @@
 import type { ScreenFactory } from '../app';
 import type { Actor } from '../engine/world';
+import { COUNTER_BONUS, pickAttack, superOf, tossOpener } from '../game/attacks';
 import { CREATURES } from '../game/creatures';
 import * as F from '../game/facts';
 import { levelById } from '../game/levels';
@@ -16,7 +17,7 @@ type Phase = 'intro' | 'ask' | 'busy' | 'explain' | 'between' | 'lost' | 'over';
 const SUB_TABLE = ['As contas em ordem, do 1 ao 10', 'As mesmas contas, fora de ordem', 'Contra o relógio e sem dicas'];
 const SUB_FINAL = ['Tabuadas do 2 ao 5', 'Tabuadas do 6 ao 10', 'Tudo misturado, contra o relógio'];
 
-export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => {
+export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume, stage }) => {
   const alive = guard(app);
   const L = levelById(level);
   const p = app.profile!;
@@ -60,6 +61,10 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
   let lastSec = -1;
   let hinted = false;
   let retype = 0;
+  /** Points multiplier earned when the rival opens the round. */
+  let counter = 1;
+  /** How many hits the rival has landed, so its super move comes on a beat. */
+  let rivalHits = 0;
   let phase: Phase = 'intro';
   let paused = false;
   let anim: Promise<unknown> = Promise.resolve();
@@ -111,6 +116,8 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     hp = hpMax = queue.length;
     lives = maxLives;
     combo = charge = roundMistakes = 0;
+    counter = 1;
+    rivalHits = 0;
     missed = [];
     hideSide();
     plate.hide();
@@ -125,9 +132,39 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     foe.reset();
     await ann.show(r === 3 ? 'Round final' : `Round ${r}`, { sub: subs[r - 1], hold: 1.3 });
     if (!alive()) return;
+    await opener();
+    if (!alive()) return;
     app.sound.go();
     await ann.show('Lute!', { tone: 'brasa', hold: 0.45 });
     if (alive()) ask();
+  }
+
+  /**
+   * Coin toss for who swings first. Winning gives the hero a free hit; losing only
+   * costs a scare, and the first answer after it is worth double.
+   */
+  async function opener() {
+    const first = tossOpener(rng);
+    const name = first === 'heroi' ? me.name : rv.name;
+    await ann.show(`${name} começa!`, { sub: first === 'heroi' ? 'Golpe de surpresa' : 'Revide valendo o dobro', tone: first === 'heroi' ? 'menta' : 'brasa', hold: 0.9 });
+    if (!alive()) return;
+    const atk = pickAttack(first === 'heroi' ? partner : L.rival, rng);
+    if (first === 'heroi') {
+      if (hp > 1) hp--;
+      const left = hp;
+      await app.moves.strike(hero, foe, atk.type, {
+        onHit: () => {
+          app.sound.impact(atk.type, 1);
+          pop(app, layer, foe.worldHead(), atk.name, 'pop pop--hit');
+          hud.setHp(left, hpMax);
+        },
+      });
+      announce(`${me.name} abriu com ${atk.name}.`);
+    } else {
+      counter = COUNTER_BONUS;
+      await app.moves.strike(foe, hero, atk.type, { onHit: () => app.sound.impact(atk.type, 1) });
+      announce(`${rv.name} abriu com ${atk.name}. O próximo acerto vale o dobro.`);
+    }
   }
 
   function ask() {
@@ -141,7 +178,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     hud.setClock(limit);
     plate.show(F.display(q), F.spoken(q), { hint: F.hintsAllowed(round) });
     announce(F.spoken(q));
-    if (app.settings.readAloud) void app.say(F.spoken(q));
+    if (app.settings.readAloud || app.canSpeak) void app.say(F.spoken(q));
   }
 
   plate.onSubmit = (v) => {
@@ -185,7 +222,9 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     combo++;
     maxCombo = Math.max(maxCombo, combo);
     charge++;
-    const pts = F.pointsFor(t, combo, q.reverse, hinted);
+    const pts = F.pointsFor(t, combo, q.reverse, hinted) * counter;
+    const doubled = counter > 1;
+    counter = 1;
     score += pts;
     hud.setScore(score);
     hud.setCombo(combo);
@@ -197,16 +236,17 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     const ko = hp <= 0;
     const left = hp;
     const ans = F.answerOf(q);
+    const atk = big ? superOf(partner) : pickAttack(partner, rng);
     pop(app, layer, hero.worldHead(), `+${pts}`, 'pop pop--points');
-    announce(`Certo! Mais ${pts} pontos.`);
+    announce(`Certo! ${atk.name}. Mais ${pts} pontos${doubled ? ', em dobro pelo revide' : ''}.`);
     anim = anim.then(async () => {
       if (!alive()) return;
-      if (big) void ann.show(me.superMove, { sub: 'Super golpe!', hold: 0.8, big: false });
-      await app.moves.strike(hero, foe, me.type, {
-        power: big ? 2 : 1,
+      if (big) void ann.show(atk.name, { sub: 'Super golpe!', hold: 0.8, big: false });
+      await app.moves.strike(hero, foe, atk.type, {
+        power: atk.power,
         ko,
         onHit: () => {
-          app.sound.impact(me.type, big ? 2 : 1);
+          app.sound.impact(atk.type, atk.power);
           pop(app, layer, foe.worldHead(), String(ans), 'pop pop--hit');
           hud.setHp(left, hpMax);
           if (big) hud.setSuper(0);
@@ -246,17 +286,22 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
       void ann.show('Tempo!', { tone: 'brasa', hold: 0.5, big: false });
     }
     const ko = lives <= 0;
-    anim = anim.then(() =>
-      alive()
-        ? app.moves.strike(foe, hero, rv.type, {
-            ko,
-            onHit: () => {
-              app.sound.impact(rv.type, 1);
-              if (ko) app.sound.knockout();
-            },
-          })
-        : undefined,
-    );
+    rivalHits++;
+    const heavy = !ko && rivalHits % 3 === 0;
+    const atk = heavy ? superOf(L.rival) : pickAttack(L.rival, rng);
+    anim = anim.then(() => {
+      if (!alive()) return undefined;
+      if (heavy) void ann.show(atk.name, { sub: `${rv.name} revidou forte`, hold: 0.8, big: false });
+      return app.moves.strike(foe, hero, atk.type, {
+        power: atk.power,
+        ko,
+        onHit: () => {
+          app.sound.impact(atk.type, atk.power);
+          pop(app, layer, hero.worldHead(), atk.name, 'pop pop--hit');
+          if (ko) app.sound.knockout();
+        },
+      });
+    });
     if (ko) {
       void anim.then(() => {
         if (alive()) void roundLost();
@@ -272,7 +317,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     plate.hintBtn.hidden = true;
     plate.setHint(`Digite ${retype} para continuar.`, 'pedido');
     plate.focus();
-    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${e.say}. Digite ${retype} para continuar.`);
+    announce(`${timeout ? 'O tempo acabou.' : 'Não foi.'} ${rv.name} usou ${atk.name}. ${e.say}. Digite ${retype} para continuar.`);
     void app.say(e.say);
   }
 
@@ -416,7 +461,7 @@ export const luta: ScreenFactory<'luta'> = (app, { level, partner, resume }) => 
     el,
     enter() {
       app.music.play(song);
-      app.world.setStage(L.stage);
+      app.world.setStage(stage ?? L.stage);
       const [a, b] = app.world.setFighters(partner, L.rival);
       hero = a;
       foe = b!;

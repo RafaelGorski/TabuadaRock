@@ -1,4 +1,5 @@
 import type { CreatureId } from '../game/creatures';
+import type { StageId } from '../game/levels';
 
 /** What a finished match hands to the results screen. */
 export interface MatchResult {
@@ -29,9 +30,10 @@ export interface Routes {
   perfis: undefined;
   novo: undefined;
   torre: { level?: string } | undefined;
-  vs: { level: string; partner: CreatureId };
+  mapa: { level: string; partner: CreatureId };
+  vs: { level: string; partner: CreatureId; stage?: StageId };
   treino: { level: string; partner: CreatureId };
-  luta: { level: string; partner: CreatureId; resume?: boolean };
+  luta: { level: string; partner: CreatureId; resume?: boolean; stage?: StageId };
   resultado: MatchResult;
   campeao: undefined;
   recordes: { tab?: RecordTab; from?: keyof Routes } | undefined;

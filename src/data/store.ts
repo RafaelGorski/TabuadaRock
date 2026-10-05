@@ -68,6 +68,8 @@ export interface Settings {
   music: boolean;
   narrator: boolean;
   readAloud: boolean;
+  /** Answer the times table out loud instead of typing. */
+  speak: boolean;
   shake: boolean;
   keypad: boolean;
   volume: number;
@@ -77,7 +79,8 @@ export const DEFAULT_SETTINGS: Settings = {
   sfx: true,
   music: true,
   narrator: true,
-  readAloud: false,
+  readAloud: true,
+  speak: false,
   shake: true,
   keypad: false,
   volume: 0.8,
@@ -214,6 +217,7 @@ export function normalizeSettings(v: unknown): Settings {
     music: bool(s.music, DEFAULT_SETTINGS.music),
     narrator: bool(s.narrator, DEFAULT_SETTINGS.narrator),
     readAloud: bool(s.readAloud, DEFAULT_SETTINGS.readAloud),
+    speak: bool(s.speak, DEFAULT_SETTINGS.speak),
     shake: bool(s.shake, DEFAULT_SETTINGS.shake),
     keypad: bool(s.keypad, DEFAULT_SETTINGS.keypad),
     volume: Math.max(0, Math.min(1, num(s.volume, DEFAULT_SETTINGS.volume))),

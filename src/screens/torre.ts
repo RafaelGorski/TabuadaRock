@@ -140,7 +140,7 @@ export const torre: ScreenFactory<'torre'> = (app, params) => {
     const btn = (label: string, ic: Parameters<typeof icon>[0], cls: string, run: () => void) => h('button', { type: 'button', class: `btn ${cls}`, onclick: run }, icon(ic), label);
     const fight = () => {
       app.sound.ok();
-      app.go('vs', { level: sel.id, partner });
+      app.go('mapa', { level: sel.id, partner });
     };
     const train = () => {
       app.sound.ok();
