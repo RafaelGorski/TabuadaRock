@@ -694,6 +694,46 @@
   color: var(--ouro);
 }
 
+.share {
+  --skew: -3deg;
+  display: grid;
+  gap: var(--s-3);
+  width: min(100%, 34rem);
+  padding: var(--s-3) var(--s-4);
+}
+
+.share__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ouro);
+}
+
+.share__title svg {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.share__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.share__note {
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: var(--nevoa);
+}
+
 .recruit {
   --skew: -4deg;
   display: grid;
