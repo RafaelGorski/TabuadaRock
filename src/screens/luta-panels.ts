@@ -67,24 +67,23 @@ export function betweenBody(s: RoundStats, next: string, onNext: () => void, onT
 
 export function lostBody(
   rival: string,
-  round: number,
   missed: Question[],
   o: { retry: () => void; train: (() => void) | null; torre: () => void },
 ): Child[] {
   return [
-    h('p', null, `${rival} venceu o round ${round}. Estas contas escaparam. Leia em voz alta antes de tentar de novo:`),
+    h('p', null, `${rival} venceu o duelo. Estas contas escaparam. Leia em voz alta antes de tentar de novo:`),
     h('ul', { class: 'missed' }, missed.map((q) => h('li', null, factLine(q)))),
     h(
       'div',
       { class: 'actions' },
-      btn(`Tentar o round ${round} de novo`, 'restart', 'btn--primary btn--big', o.retry, true),
+      btn('Tentar o duelo de novo', 'restart', 'btn--primary btn--big', o.retry, true),
       o.train ? btn('Treinar esta tabuada', 'bulb', '', o.train) : null,
       btn('Voltar para a torre', 'left', '', o.torre),
     ),
   ];
 }
 
-export function pauseBox(round: number, onResume: () => void, onQuit: () => void): HTMLElement {
+export function pauseBox(onResume: () => void, onQuit: () => void): HTMLElement {
   return h(
     'div',
     { class: 'pause', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pause-title' },
@@ -94,7 +93,7 @@ export function pauseBox(round: number, onResume: () => void, onQuit: () => void
       h('h2', { class: 'fp__title', id: 'pause-title' }, 'Pausa'),
       h('p', null, 'A luta e o relógio estão parados.'),
       h('div', { class: 'actions' }, btn('Continuar a luta', 'play', 'btn--primary btn--big', onResume, true), btn('Sair da luta', 'close', '', onQuit)),
-      h('p', { class: 'fp__note' }, round > 1 ? 'Os rounds que você já venceu ficam salvos.' : 'Se sair agora, a luta recomeça do round 1.'),
+      h('p', { class: 'fp__note' }, 'Se sair agora, o duelo recomeça do início.'),
     ),
   );
 }

@@ -57,8 +57,8 @@ export class FightHud {
     this.superEl = h('div', { class: 'super', 'aria-hidden': 'true' }, h('span', { class: 'super__label' }, 'Super'), h('span', { class: 'super__pips' }, this.superPips));
     this.combo = h('div', { class: 'combo', 'aria-hidden': 'true' });
     this.clock = h('div', { class: 'clock', role: 'timer', 'aria-label': 'Sem relógio' }, icon('infinity'));
-    this.roundEl = h('p', { class: 'hud__round' }, 'Round 1');
-    this.pips = Array.from({ length: 3 }, () => h('i', { class: 'pip' }));
+    this.roundEl = h('p', { class: 'hud__round' }, 'Duelo');
+    this.pips = [h('i', { class: 'pip' })];
     this.scoreEl = h('span', { class: 'hud__points' }, '0');
     const side = (id: CreatureId, bar: Bar, cls: string, extra: Node[]) =>
       h(

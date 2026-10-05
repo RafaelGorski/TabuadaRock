@@ -9,7 +9,7 @@ export interface Attack {
   power: 1 | 2;
 }
 
-/** A second element every fighter can reach for, so two rounds never look the same. */
+/** A second element every fighter can reach for, so two duels never look the same. */
 const WILD: Record<CreatureId, { name: string; type: ElementType }> = {
   capibolha: { name: 'Chuva de Gotas', type: 'vento' },
   brasonca: { name: 'Patada de Pedra', type: 'pedra' },

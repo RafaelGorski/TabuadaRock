@@ -202,7 +202,7 @@ export const opcoes: ScreenFactory<'opcoes'> = (app, params) => {
               { class: 'settings' },
               flag('sfx', 'Efeitos sonoros', 'Golpes, acertos e botões.'),
               flag('music', 'Música', 'A trilha dos menus e das lutas.', (on) => on && app.music.play('menu')),
-              flag('narrator', 'Narrador', `Uma voz anuncia os rounds e explica as contas.${voiceNote}`, (on) => {
+              flag('narrator', 'Narrador', `Uma voz anuncia os duelos e explica as contas.${voiceNote}`, (on) => {
                 const r = readAloud();
                 if (r) r.disabled = !on;
                 if (on) void app.say('Narrador ligado.');

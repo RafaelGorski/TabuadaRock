@@ -11,7 +11,7 @@ export interface MatchResult {
   correct: number;
   ms: number;
   maxCombo: number;
-  /** Rounds won without any mistake. */
+  /** Whether the duel was won without any mistake (0 or 1). */
   perfect: number;
   /** Best score for this level before this match. */
   prevBest: number;
@@ -33,7 +33,7 @@ export interface Routes {
   mapa: { level: string; partner: CreatureId };
   vs: { level: string; partner: CreatureId; stage?: StageId };
   treino: { level: string; partner: CreatureId };
-  luta: { level: string; partner: CreatureId; resume?: boolean; stage?: StageId };
+  luta: { level: string; partner: CreatureId; stage?: StageId };
   resultado: MatchResult;
   campeao: undefined;
   recordes: { tab?: RecordTab; from?: keyof Routes } | undefined;
